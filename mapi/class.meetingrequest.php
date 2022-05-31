@@ -1278,7 +1278,7 @@ class Meetingrequest {
 		} else {
 			// Here only properties are set on calendaritem, because user is responding from calendar.
 			if ($basedate) {
-				// remove the occurence
+				// remove the occurrence
 				$this->doRemoveExceptionFromCalendar($basedate, $this->message, $store);
 			} else {
 				// remove normal/recurring meeting item.
@@ -1292,7 +1292,7 @@ class Meetingrequest {
 	 * Function can be used to cancel any existing meeting and send cancellation mails to attendees.
 	 * Should only be called from meeting object from calendar.
 	 *
-	 * @param string $basedate (optional) basedate of occurence which should be cancelled
+	 * @param string $basedate (optional) basedate of occurrence which should be cancelled
 	 * @FIXME cancellation mail is also sent to attendee which has declined the meeting
 	 * @FIXME don't send canellation mail when cancelling meeting from past
 	 */
@@ -1311,10 +1311,10 @@ class Meetingrequest {
 		$messageProps = mapi_getprops($this->message, [PR_ENTRYID, $this->proptags['recurring']]);
 
 		if (isset($messageProps[$this->proptags['recurring']]) && $messageProps[$this->proptags['recurring']] === true) {
-			// cancellation of recurring series or one occurence
+			// cancellation of recurring series or one occurrence
 			$recurrence = new Recurrence($this->store, $this->message);
 
-			// if basedate is specified then we are cancelling only one occurence, so create exception for that occurence
+			// if basedate is specified then we are cancelling only one occurrence, so create exception for that occurrence
 			if ($basedate) {
 				$recurrence->createException([], $basedate, true);
 			}
@@ -1596,8 +1596,8 @@ class Meetingrequest {
 			$calendarItem = $this->getCorrespondentCalendarItem(true);
 		}
 
-		// even if we have received request/response for exception/occurence then also
-		// we can check recurring series for organizer, no need to check with exception/occurence
+		// even if we have received request/response for exception/occurrence then also
+		// we can check recurring series for organizer, no need to check with exception/occurrence
 
 		if ($calendarItem !== false) {
 			$messageProps = mapi_getprops($calendarItem, [$this->proptags['responsestatus']]);
@@ -3163,7 +3163,7 @@ class Meetingrequest {
 	}
 
 	/**
-	 * OL2007 uses these 4 properties to specify occurence that should be updated.
+	 * OL2007 uses these 4 properties to specify occurrence that should be updated.
 	 * ical generates RECURRENCE-ID property based on exception's basedate (PidLidExceptionReplaceTime),
 	 * but OL07 doesn't send this property, so ical will generate RECURRENCE-ID property based on date
 	 * from GlobalObjId and time from StartRecurTime property, so we are sending basedate property and

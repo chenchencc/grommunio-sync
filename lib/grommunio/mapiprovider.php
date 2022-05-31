@@ -494,7 +494,7 @@ break;
 		} // day of month (1-31)
 
 		// All changed exceptions are appointments within the 'exceptions' array. They contain the same items as a normal appointment
-		foreach ($recurrence->recur['changed_occurences'] as $change) {
+		foreach ($recurrence->recur['changed_occurrences'] as $change) {
 			$exception = new SyncAppointmentException();
 
 			// start, end, basedate, subject, remind_before, reminderset, location, busystatus, alldayevent, label
@@ -565,7 +565,7 @@ break;
 		}
 
 		// Deleted appointments contain only the original date (basedate) and a 'deleted' tag
-		foreach ($recurrence->recur['deleted_occurences'] as $deleted) {
+		foreach ($recurrence->recur['deleted_occurrences'] as $deleted) {
 			$exception = new SyncAppointmentException();
 
 			$exception->exceptionstarttime = $this->getGMTTimeByTZ($this->getDayStartOfTimestamp($deleted) + $recurrence->recur['startocc'] * 60, $tz);
@@ -1517,8 +1517,8 @@ break;
 							$exceptionprops[$appointmentprops['alldayevent']] = $mapiexception['alldayevent'] = $exception->alldayevent;
 						}
 
-						if (!isset($recur['changed_occurences'])) {
-							$recur['changed_occurences'] = [];
+						if (!isset($recur['changed_occurrences'])) {
+							$recur['changed_occurrences'] = [];
 						}
 
 						if (isset($exception->body)) {
@@ -1532,7 +1532,7 @@ break;
 								((isset($exceptionprops[$appointmentprops['html']])) ? $exceptionprops[$appointmentprops['html']] : '');
 						}
 
-						array_push($recur['changed_occurences'], $mapiexception);
+						array_push($recur['changed_occurrences'], $mapiexception);
 
 						if (!empty($exceptionprops)) {
 							$noexceptions = false;

@@ -61,7 +61,7 @@ class Request {
 	private static $collectionId;
 	private static $itemId;
 	private static $longId; // TODO
-	private static $occurence; // TODO
+	private static $occurrence; // TODO
 	private static $saveInSent;
 	private static $acceptMultipart;
 	private static $base64QueryDecoded;

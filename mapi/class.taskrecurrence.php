@@ -75,12 +75,12 @@
 			$this->recur = $recur;
 			$this->action = &$recur;
 
-			if (!isset($this->recur['changed_occurences'])) {
-				$this->recur['changed_occurences'] = [];
+			if (!isset($this->recur['changed_occurrences'])) {
+				$this->recur['changed_occurrences'] = [];
 			}
 
-			if (!isset($this->recur['deleted_occurences'])) {
-				$this->recur['deleted_occurences'] = [];
+			if (!isset($this->recur['deleted_occurrences'])) {
+				$this->recur['deleted_occurrences'] = [];
 			}
 
 			if (!isset($this->recur['startocc'])) {

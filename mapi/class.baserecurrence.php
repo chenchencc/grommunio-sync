@@ -148,8 +148,8 @@
 				return;
 			}
 
-			$ret['changed_occurences'] = [];
-			$ret['deleted_occurences'] = [];
+			$ret['changed_occurrences'] = [];
+			$ret['deleted_occurrences'] = [];
 
 			$data = unpack('Vconst1/Crtype/Cconst2/Vrtype2', $rdata);
 
@@ -468,7 +468,7 @@
 			 */
 
 			// Find deleted occurrences
-			$deleted_occurences = [];
+			$deleted_occurrences = [];
 
 			foreach ($exc_base_dates as $base_date) {
 				$found = false;
@@ -482,12 +482,12 @@
 				}
 				if (!$found) {
 					// item was not in exc_changed_details, so it must be deleted
-					$deleted_occurences[] = $base_date;
+					$deleted_occurrences[] = $base_date;
 				}
 			}
 
-			$ret['deleted_occurences'] = $deleted_occurences;
-			$ret['changed_occurences'] = $exc_changed_details;
+			$ret['deleted_occurrences'] = $deleted_occurrences;
+			$ret['changed_occurrences'] = $exc_changed_details;
 
 			// enough data for normal exception (no extended data)
 			if (strlen($rdata) < 16) {
@@ -551,7 +551,7 @@
 			}
 
 			// update with extended data
-			$ret['changed_occurences'] = $exc_changed_details;
+			$ret['changed_occurrences'] = $exc_changed_details;
 
 			return $ret;
 		}
@@ -637,10 +637,10 @@
 							$weekskip = 1;
 						}
 
-						// Check if the recurrence ends after a number of occurences, in that case we must calculate the
-						// remaining occurences based on the start of the recurrence.
+						// Check if the recurrence ends after a number of occurrences, in that case we must calculate the
+						// remaining occurrences based on the start of the recurrence.
 						if (((int) $this->recur['term']) == 0x22) {
-							// $weekskip is the amount of weeks to skip from the startdate before the first occurence
+							// $weekskip is the amount of weeks to skip from the startdate before the first occurrence
 							// $forwardcount is the maximum number of week occurrences we can go ahead after the first occurrence that
 							// is still inside the recurrence. We subtract one to make sure that the last week is never forwarded over
 							// (eg when numoccur = 2, and daycount = 1)
@@ -693,8 +693,8 @@
 					$curyear = gmdate('Y', (int) $this->recur['start']);
 					$curmonth = gmdate('n', (int) $this->recur['start']);
 
-					// Check if the recurrence ends after a number of occurences, in that case we must calculate the
-					// remaining occurences based on the start of the recurrence.
+					// Check if the recurrence ends after a number of occurrences, in that case we must calculate the
+					// remaining occurrences based on the start of the recurrence.
 					if (((int) $this->recur['term']) == 0x22) {
 						// $forwardcount is the number of occurrences we can skip and still be inside the recurrence range (minus
 						// one to make sure there are always at least one occurrence left)
@@ -959,8 +959,8 @@
 			// Exception data
 
 			// Get all exceptions
-			$deleted_items = $this->recur['deleted_occurences'];
-			$changed_items = $this->recur['changed_occurences'];
+			$deleted_items = $this->recur['deleted_occurrences'];
+			$changed_items = $this->recur['changed_occurrences'];
 
 			// Merge deleted and changed items into one list
 			$items = $deleted_items;
@@ -1235,7 +1235,7 @@
 
 			// Detailed exception data
 
-			$changed_items = $this->recur['changed_occurences'];
+			$changed_items = $this->recur['changed_occurrences'];
 
 			$rdata .= pack('v', count($changed_items));
 
@@ -1659,10 +1659,10 @@
 				// exceptions are in range and have a reminder set
 				if ($remindersonly && (!isset($this->messageprops[$this->proptags['reminder']]) || $this->messageprops[$this->proptags['reminder']] == false)) {
 					// Sort exceptions by start time
-					uasort($this->recur['changed_occurences'], [$this, 'sortExceptionStart']);
+					uasort($this->recur['changed_occurrences'], [$this, 'sortExceptionStart']);
 
 					// Loop through all changed exceptions
-					foreach ($this->recur['changed_occurences'] as $exception) {
+					foreach ($this->recur['changed_occurrences'] as $exception) {
 						// Check reminder set
 						if (!isset($exception['reminder']) || $exception['reminder'] == false) {
 							continue;
@@ -1893,7 +1893,7 @@
 					}
 				}
 				// to get all exception items
-				if (!empty($this->recur['changed_occurences'])) {
+				if (!empty($this->recur['changed_occurrences'])) {
 					$this->processExceptionItems($items, $start, $end);
 				}
 			}

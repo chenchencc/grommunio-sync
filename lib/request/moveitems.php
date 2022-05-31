@@ -121,8 +121,8 @@ class MoveItems extends RequestProcessor {
 		}
 
 		self::$topCollector->AnnounceInformation(sprintf('Moved %d - Codes', $operationTotal), true);
-		foreach ($operationResults as $status => $occurences) {
-			self::$topCollector->AnnounceInformation(sprintf('%dx%d', $occurences, $status), true);
+		foreach ($operationResults as $status => $occurrences) {
+			self::$topCollector->AnnounceInformation(sprintf('%dx%d', $occurrences, $status), true);
 		}
 
 		self::$encoder->endTag();

@@ -456,10 +456,10 @@ class Mail_RFC822 {
 	 * Sub function that is used only by hasUnclosedBrackets().
 	 *
 	 * @param string $string the string to check
-	 * @param int    &$num   The number of occurences
+	 * @param int    &$num   The number of occurrences
 	 * @param string $char   the character to count
 	 *
-	 * @return int the number of occurences of $char in $string, adjusted for backslashes
+	 * @return int the number of occurrences of $char in $string, adjusted for backslashes
 	 */
 	protected function _hasUnclosedBracketsSub($string, &$num, $char) {
 		$parts = explode($char, $string);
