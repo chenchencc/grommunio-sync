@@ -115,7 +115,7 @@ class TopCollector extends InterProcessData {
 			// use the pid as subkey
 			$ok = $this->setDeviceUserData(self::TOPDATA, $this->latest, self::$devid, self::$user, self::$pid);
 			if (!$ok) {
-				ZLog::Write(LOGLEVEL_WARN, 'TopCollector::AnnounceInformation(): could not write to redis. grommunio-sync top will not display this data.');
+				SLog::Write(LOGLEVEL_WARN, 'TopCollector::AnnounceInformation(): could not write to redis. grommunio-sync top will not display this data.');
 
 				return false;
 			}

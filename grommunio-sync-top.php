@@ -10,11 +10,11 @@
  */
 
 require_once 'vendor/autoload.php';
-if (!defined('ZPUSH_CONFIG')) {
-	define('ZPUSH_CONFIG', 'config.php');
+if (!defined('GSYNC_CONFIG')) {
+	define('GSYNC_CONFIG', 'config.php');
 }
 
-include_once ZPUSH_CONFIG;
+include_once GSYNC_CONFIG;
 
 /*
  * MAIN
@@ -23,14 +23,14 @@ include_once ZPUSH_CONFIG;
 	define('BASE_PATH_CLI', dirname(__FILE__) . '/');
 	set_include_path(get_include_path() . PATH_SEPARATOR . BASE_PATH_CLI);
 
-	if (!defined('ZPUSH_CONFIG')) {
-		define('ZPUSH_CONFIG', BASE_PATH_CLI . 'config.php');
+	if (!defined('GSYNC_CONFIG')) {
+		define('GSYNC_CONFIG', BASE_PATH_CLI . 'config.php');
 	}
 
-	include_once ZPUSH_CONFIG;
+	include_once GSYNC_CONFIG;
 
 	try {
-		ZPush::CheckConfig();
+		GSync::CheckConfig();
 		if (!function_exists('pcntl_signal')) {
 			throw new FatalException("Function pcntl_signal() is not available. Please install package 'php5-pcntl' (or similar) on your system.");
 		}
@@ -39,7 +39,7 @@ include_once ZPUSH_CONFIG;
 			throw new FatalException('This script can only be called from the CLI.');
 		}
 
-		$zpt = new ZPushTop();
+		$zpt = new GSyncTop();
 
 		// check if help was requested from CLI
 		if (in_array('-h', $argv) || in_array('--help', $argv)) {
@@ -56,7 +56,7 @@ include_once ZPUSH_CONFIG;
 		} else {
 			echo "grommunio-sync interprocess communication (IPC) is not available or TopCollector is disabled.\n";
 		}
-	} catch (ZPushException $zpe) {
+	} catch (GSyncException $zpe) {
 		fwrite(STDERR, get_class($zpe) . ': ' . $zpe->getMessage() . "\n");
 
 		exit(1);
@@ -67,7 +67,7 @@ include_once ZPUSH_CONFIG;
 /*
  * grommunio-sync-top
  */
-class ZPushTop {
+class GSyncTop {
 	// show options
 	public const SHOW_DEFAULT = 0;
 	public const SHOW_ACTIVE_ONLY = 1;

@@ -91,7 +91,7 @@ class GetItemEstimate extends RequestProcessor {
 						// foldertype definition
 						if (self::$decoder->getElementStartTag(SYNC_FOLDERTYPE)) {
 							$foldertype = self::$decoder->getElementContent();
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleGetItemEstimate(): specified options block with foldertype '%s'", $foldertype));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleGetItemEstimate(): specified options block with foldertype '%s'", $foldertype));
 
 							// switch the foldertype for the next options
 							$spa->UseCPO($foldertype);
@@ -167,7 +167,7 @@ class GetItemEstimate extends RequestProcessor {
 					$sc->AddParameter($spa, 'state', self::$deviceManager->GetStateManager()->GetSyncState($spa->GetSyncKey()));
 
 					// if this is an additional folder the backend has to be setup correctly
-					if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
+					if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
 						throw new StatusException(sprintf('HandleGetItemEstimate() could not Setup() the backend for folder id %s/%s', $spa->GetFolderId(), $spa->GetBackendFolderId()), SYNC_GETITEMESTSTATUS_COLLECTIONINVALID);
 					}
 				} catch (StateNotFoundException $snfex) {

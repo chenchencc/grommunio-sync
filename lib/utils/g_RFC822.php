@@ -1005,7 +1005,7 @@ class Mail_RFC822 {
 	 * @return bool always false as there was an error
 	 */
 	public function raiseError($message) {
-		ZLog::Write(LOGLEVEL_ERROR, 'z_RFC822 error: ' . $message);
+		SLog::Write(LOGLEVEL_ERROR, 'z_RFC822 error: ' . $message);
 
 		return false;
 	}

@@ -73,7 +73,7 @@ class MeetingResponse extends RequestProcessor {
 				$backendFolderId = self::$deviceManager->GetBackendIdForFolderId($req['folderid']);
 
 				// if the source folder is an additional folder the backend has to be setup correctly
-				if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($backendFolderId))) {
+				if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($backendFolderId))) {
 					throw new StatusException(sprintf('HandleMoveItems() could not Setup() the backend for folder id %s/%s', $req['folderid'], $backendFolderId), SYNC_MEETRESPSTATUS_SERVERERROR);
 				}
 

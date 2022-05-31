@@ -51,7 +51,7 @@ class MAPIStreamWrapper {
 			$this->streamlength = 0;
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIStreamWrapper::stream_open(): initialized mapistream: %s - streamlength: %d - HTML-safe-truncate: %s', $this->mapistream, $this->streamlength, Utils::PrintAsString($this->truncateHtmlSafe)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIStreamWrapper::stream_open(): initialized mapistream: %s - streamlength: %d - HTML-safe-truncate: %s', $this->mapistream, $this->streamlength, Utils::PrintAsString($this->truncateHtmlSafe)));
 
 		return true;
 	}
@@ -142,7 +142,7 @@ class MAPIStreamWrapper {
 		$this->toTruncate = true;
 
 		if ($this->position > $this->streamlength) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf('MAPIStreamWrapper->stream_truncate(): stream position (%d) ahead of new size of %d. Repositioning pointer to end of stream.', $this->position, $this->streamlength));
+			SLog::Write(LOGLEVEL_WARN, sprintf('MAPIStreamWrapper->stream_truncate(): stream position (%d) ahead of new size of %d. Repositioning pointer to end of stream.', $this->position, $this->streamlength));
 			$this->position = $this->streamlength;
 		}
 

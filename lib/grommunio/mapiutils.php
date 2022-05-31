@@ -256,12 +256,12 @@ class MAPIUtils {
 		$p = mapi_getprops($mapimessage, [PR_MESSAGE_DELIVERY_TIME]);
 
 		if (isset($p[PR_MESSAGE_DELIVERY_TIME]) && $p[PR_MESSAGE_DELIVERY_TIME] >= $timestamp) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIUtils->IsInEmailSyncInterval: Message is in the synchronization interval');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIUtils->IsInEmailSyncInterval: Message is in the synchronization interval');
 
 			return true;
 		}
 
-		ZLog::Write(LOGLEVEL_WARN, 'MAPIUtils->IsInEmailSyncInterval: Message is OUTSIDE the synchronization interval');
+		SLog::Write(LOGLEVEL_WARN, 'MAPIUtils->IsInEmailSyncInterval: Message is OUTSIDE the synchronization interval');
 
 		return false;
 	}
@@ -306,12 +306,12 @@ class MAPIUtils {
 					&& !isset($p[$props['recurrenceend']]) && $p[$props['isrecurring']] == true && $p[$props['starttime']] <= $end
 				)
 		   ) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIUtils->IsInCalendarSyncInterval: Message is in the synchronization interval');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIUtils->IsInCalendarSyncInterval: Message is in the synchronization interval');
 
 			return true;
 		}
 
-		ZLog::Write(LOGLEVEL_WARN, 'MAPIUtils->IsInCalendarSyncInterval: Message is OUTSIDE the synchronization interval');
+		SLog::Write(LOGLEVEL_WARN, 'MAPIUtils->IsInCalendarSyncInterval: Message is OUTSIDE the synchronization interval');
 
 		return false;
 	}
@@ -328,15 +328,15 @@ class MAPIUtils {
 		$sensitivity = mapi_getprops($mapimessage, [PR_SENSITIVITY]);
 		if (isset($sensitivity[PR_SENSITIVITY]) && $sensitivity[PR_SENSITIVITY] >= SENSITIVITY_PRIVATE) {
 			$hexFolderid = bin2hex($folderid);
-			$shortId = ZPush::GetDeviceManager()->GetFolderIdForBackendId($hexFolderid);
+			$shortId = GSync::GetDeviceManager()->GetFolderIdForBackendId($hexFolderid);
 			if (Utils::GetFolderOriginFromId($shortId) == DeviceManager::FLD_ORIGIN_IMPERSONATED) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIUtils->IsMessageSharedAndPrivate(): Message is in impersonated store '%s' and marked as private", ZPush::GetBackend()->GetImpersonatedUser()));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIUtils->IsMessageSharedAndPrivate(): Message is in impersonated store '%s' and marked as private", GSync::GetBackend()->GetImpersonatedUser()));
 
 				return true;
 			}
-			$sharedUser = ZPush::GetAdditionalSyncFolderStore($hexFolderid);
+			$sharedUser = GSync::GetAdditionalSyncFolderStore($hexFolderid);
 			if (Utils::GetFolderOriginFromId($shortId) != DeviceManager::FLD_ORIGIN_USER && $sharedUser != false && $sharedUser != 'SYSTEM') {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIUtils->IsMessageSharedAndPrivate(): Message is in shared store '%s' and marked as private", $sharedUser));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIUtils->IsMessageSharedAndPrivate(): Message is in shared store '%s' and marked as private", $sharedUser));
 
 				return true;
 			}
@@ -357,12 +357,12 @@ class MAPIUtils {
 		$stream = mapi_openproperty($message, $prop, IID_IStream, 0, 0);
 		$ret = mapi_last_hresult();
 		if ($ret == MAPI_E_NOT_FOUND) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIUtils->readPropStream: property 0x%08X not found. It is either empty or not set. It will be ignored.', $prop));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIUtils->readPropStream: property 0x%08X not found. It is either empty or not set. It will be ignored.', $prop));
 
 			return '';
 		}
 		if ($ret) {
-			ZLog::Write(LOGLEVEL_ERROR, 'MAPIUtils->readPropStream error opening stream: 0x%08X', $ret);
+			SLog::Write(LOGLEVEL_ERROR, 'MAPIUtils->readPropStream error opening stream: 0x%08X', $ret);
 
 			return '';
 		}
@@ -389,7 +389,7 @@ class MAPIUtils {
 	public static function IsUnicodeStore($store) {
 		$supportmask = mapi_getprops($store, [PR_STORE_SUPPORT_MASK]);
 		if (isset($supportmask[PR_STORE_SUPPORT_MASK]) && ($supportmask[PR_STORE_SUPPORT_MASK] & STORE_UNICODE_OK)) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'Store supports properties containing Unicode characters.');
+			SLog::Write(LOGLEVEL_DEBUG, 'Store supports properties containing Unicode characters.');
 			define('STORE_SUPPORTS_UNICODE', true);
 			define('STORE_INTERNET_CPID', INTERNET_CPID_UTF8);
 		}
@@ -609,7 +609,7 @@ class MAPIUtils {
 				$data = mapi_openproperty($att, PR_ATTACH_DATA_BIN);
 				mapi_message_deleteattach($mapimessage, $attnum);
 				mapi_inetmapi_imtomapi($session, $store, $addressBook, $mapimessage, $data, ['parse_smime_signed' => 1]);
-				ZLog::Write(LOGLEVEL_DEBUG, 'Convert a smime signed message to a normal message.');
+				SLog::Write(LOGLEVEL_DEBUG, 'Convert a smime signed message to a normal message.');
 			}
 			$mprops = mapi_getprops($mapimessage, [PR_MESSAGE_FLAGS]);
 			// Workaround for issue 13

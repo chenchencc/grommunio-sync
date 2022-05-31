@@ -68,7 +68,7 @@ class ImportChangesStream implements IImportChanges {
 
 		// prevent sending the same object twice in one request
 		if (in_array($id, $this->seenObjects)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("Object '%s' discarded! Object already sent in this request.", $id));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("Object '%s' discarded! Object already sent in this request.", $id));
 
 			return true;
 		}
@@ -77,8 +77,8 @@ class ImportChangesStream implements IImportChanges {
 		$this->seenObjects[] = $id;
 
 		// checks if the next message may cause a loop or is broken
-		if (ZPush::GetDeviceManager()->DoNotStreamMessage($id, $message)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportMessageChange('%s'): message ignored and requested to be removed from mobile", $id));
+		if (GSync::GetDeviceManager()->DoNotStreamMessage($id, $message)) {
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportMessageChange('%s'): message ignored and requested to be removed from mobile", $id));
 
 			// this is an internal operation & should not trigger an update in the device manager
 			$this->checkForIgnoredMessages = false;
@@ -109,7 +109,7 @@ class ImportChangesStream implements IImportChanges {
 				}
 				$message = $newmessage;
 				unset($newmessage);
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportMessageChange('%s'): SyncMail message updated. Message content is striped, only flags/categories are streamed.", $id));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportMessageChange('%s'): SyncMail message updated. Message content is striped, only flags/categories are streamed.", $id));
 			}
 
 			$this->encoder->startTag(SYNC_MODIFY);
@@ -137,7 +137,7 @@ class ImportChangesStream implements IImportChanges {
 	 */
 	public function ImportMessageDeletion($id, $asSoftDelete = false) {
 		if ($this->checkForIgnoredMessages) {
-			ZPush::GetDeviceManager()->RemoveBrokenMessage($id);
+			GSync::GetDeviceManager()->RemoveBrokenMessage($id);
 		}
 
 		++$this->importedMsgs;
@@ -216,8 +216,8 @@ class ImportChangesStream implements IImportChanges {
 	 */
 	public function ImportFolderChange($folder) {
 		// checks if the next message may cause a loop or is broken
-		if (ZPush::GetDeviceManager(false) && ZPush::GetDeviceManager()->DoNotStreamMessage($folder->serverid, $folder)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportFolderChange('%s'): folder ignored as requested by DeviceManager.", $folder->serverid));
+		if (GSync::GetDeviceManager(false) && GSync::GetDeviceManager()->DoNotStreamMessage($folder->serverid, $folder)) {
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesStream->ImportFolderChange('%s'): folder ignored as requested by DeviceManager.", $folder->serverid));
 
 			return true;
 		}

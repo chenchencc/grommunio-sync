@@ -7,7 +7,7 @@
  * Core functionalities
  */
 
-class ZPush {
+class GSync {
 	public const UNAUTHENTICATED = 1;
 	public const UNPROVISIONED = 2;
 	public const NOACTIVESYNCCOMMAND = 3;
@@ -244,7 +244,7 @@ class ZPush {
 		}
 
 		if (defined('USE_X_FORWARDED_FOR_HEADER')) {
-			ZLog::Write(LOGLEVEL_INFO, "The configuration parameter 'USE_X_FORWARDED_FOR_HEADER' was deprecated in favor of 'USE_CUSTOM_REMOTE_IP_HEADER'. Please update your configuration.");
+			SLog::Write(LOGLEVEL_INFO, "The configuration parameter 'USE_X_FORWARDED_FOR_HEADER' was deprecated in favor of 'USE_CUSTOM_REMOTE_IP_HEADER'. Please update your configuration.");
 		}
 
 		// check redis configuration - set defaults
@@ -314,24 +314,24 @@ class ZPush {
 
 		// the check on additional folders will not throw hard errors, as this is probably changed on live systems
 		if (isset($additionalFolders) && !is_array($additionalFolders)) {
-			ZLog::Write(LOGLEVEL_ERROR, 'ZPush::CheckConfig() : The additional folders synchronization not available as array.');
+			SLog::Write(LOGLEVEL_ERROR, 'GSync::CheckConfig() : The additional folders synchronization not available as array.');
 		} else {
 			// check configured data
 			foreach ($additionalFolders as $af) {
 				if (!is_array($af) || !isset($af['store']) || !isset($af['folderid']) || !isset($af['name']) || !isset($af['type'])) {
-					ZLog::Write(LOGLEVEL_ERROR, 'ZPush::CheckConfig() : the additional folder synchronization is not configured correctly. Missing parameters. Entry will be ignored.');
+					SLog::Write(LOGLEVEL_ERROR, 'GSync::CheckConfig() : the additional folder synchronization is not configured correctly. Missing parameters. Entry will be ignored.');
 
 					continue;
 				}
 
 				if ($af['store'] == '' || $af['folderid'] == '' || $af['name'] == '' || $af['type'] == '') {
-					ZLog::Write(LOGLEVEL_WARN, 'ZPush::CheckConfig() : the additional folder synchronization is not configured correctly. Empty parameters. Entry will be ignored.');
+					SLog::Write(LOGLEVEL_WARN, 'GSync::CheckConfig() : the additional folder synchronization is not configured correctly. Empty parameters. Entry will be ignored.');
 
 					continue;
 				}
 
 				if (!in_array($af['type'], [SYNC_FOLDER_TYPE_USER_NOTE, SYNC_FOLDER_TYPE_USER_CONTACT, SYNC_FOLDER_TYPE_USER_APPOINTMENT, SYNC_FOLDER_TYPE_USER_TASK, SYNC_FOLDER_TYPE_USER_MAIL])) {
-					ZLog::Write(LOGLEVEL_ERROR, sprintf("ZPush::CheckConfig() : the type of the additional synchronization folder '%s is not permitted.", $af['name']));
+					SLog::Write(LOGLEVEL_ERROR, sprintf("GSync::CheckConfig() : the type of the additional synchronization folder '%s is not permitted.", $af['name']));
 
 					continue;
 				}
@@ -339,7 +339,7 @@ class ZPush {
 			}
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("Used timezone '%s'", date_default_timezone_get()));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("Used timezone '%s'", date_default_timezone_get()));
 
 		// get the statemachine, which will also try to load the backend.. This could throw errors
 		self::GetStateMachine();
@@ -357,20 +357,20 @@ class ZPush {
 	 * @return object implementation of IStateMachine
 	 */
 	public static function GetStateMachine() {
-		if (!isset(ZPush::$stateMachine)) {
+		if (!isset(GSync::$stateMachine)) {
 			// the backend could also return an own IStateMachine implementation
-			ZPush::$stateMachine = self::GetBackend()->GetStateMachine();
+			GSync::$stateMachine = self::GetBackend()->GetStateMachine();
 
-			if (ZPush::$stateMachine->GetStateVersion() !== ZPush::GetLatestStateVersion()) {
+			if (GSync::$stateMachine->GetStateVersion() !== GSync::GetLatestStateVersion()) {
 				if (class_exists('TopCollector')) {
 					self::GetTopCollector()->AnnounceInformation('Run migration script!', true);
 				}
 
-				throw new ServiceUnavailableException(sprintf('The state version available to the %s is not the latest version - please run the state upgrade script. See release notes for more information.', get_class(ZPush::$stateMachine)));
+				throw new ServiceUnavailableException(sprintf('The state version available to the %s is not the latest version - please run the state upgrade script. See release notes for more information.', get_class(GSync::$stateMachine)));
 			}
 		}
 
-		return ZPush::$stateMachine;
+		return GSync::$stateMachine;
 	}
 
 	/**
@@ -379,11 +379,11 @@ class ZPush {
 	 * @return object Redis
 	 */
 	public static function GetRedis() {
-		if (!isset(ZPush::$redis)) {
-			ZPush::$redis = new RedisConnection();
+		if (!isset(GSync::$redis)) {
+			GSync::$redis = new RedisConnection();
 		}
 
-		return ZPush::$redis;
+		return GSync::$redis;
 	}
 
 	/**
@@ -416,11 +416,11 @@ class ZPush {
 	 * @return object DeviceManager
 	 */
 	public static function GetDeviceManager($initialize = true) {
-		if (!isset(ZPush::$deviceManager) && $initialize) {
-			ZPush::$deviceManager = new DeviceManager();
+		if (!isset(GSync::$deviceManager) && $initialize) {
+			GSync::$deviceManager = new DeviceManager();
 		}
 
-		return ZPush::$deviceManager;
+		return GSync::$deviceManager;
 	}
 
 	/**
@@ -429,11 +429,11 @@ class ZPush {
 	 * @return object TopCollector
 	 */
 	public static function GetTopCollector() {
-		if (!isset(ZPush::$topCollector)) {
-			ZPush::$topCollector = new TopCollector();
+		if (!isset(GSync::$topCollector)) {
+			GSync::$topCollector = new TopCollector();
 		}
 
-		return ZPush::$topCollector;
+		return GSync::$topCollector;
 	}
 
 	/**
@@ -468,7 +468,7 @@ class ZPush {
 			return false;
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("Including backend file: '%s'", $toLoad));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("Including backend file: '%s'", $toLoad));
 		return include_once $toLoad;
 	}
 
@@ -480,12 +480,12 @@ class ZPush {
 	 */
 	public static function GetBackend() {
 		// if the backend is not yet loaded, load backend drivers and instantiate it
-		if (!isset(ZPush::$backend)) {
+		if (!isset(GSync::$backend)) {
 			// Initialize Grommunio
-			ZPush::$backend = new Grommunio();
+			GSync::$backend = new Grommunio();
 		}
 
-		return ZPush::$backend;
+		return GSync::$backend;
 	}
 
 	/**
@@ -501,7 +501,7 @@ class ZPush {
 		$addfolders = self::getAddSyncFolders() + $userFolder;
 		// if requested, we rewrite the backendids to folderids here
 		if ($backendIdsAsKeys === false && !empty($addfolders)) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'ZPush::GetAdditionalSyncFolders(): Requested AS folderids as keys for additional folders array, converting');
+			SLog::Write(LOGLEVEL_DEBUG, 'GSync::GetAdditionalSyncFolders(): Requested AS folderids as keys for additional folders array, converting');
 			$faddfolders = [];
 			foreach ($addfolders as $backendId => $addFolder) {
 				$fid = self::GetDeviceManager()->GetFolderIdForBackendId($backendId);
@@ -532,7 +532,7 @@ class ZPush {
 		}
 
 		if (!$noDebug) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ZPush::GetAdditionalSyncFolderStore('%s'): '%s'", $backendid, Utils::PrintAsString($val)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("GSync::GetAdditionalSyncFolderStore('%s'): '%s'", $backendid, Utils::PrintAsString($val)));
 		}
 
 		return $val;
@@ -572,30 +572,30 @@ class ZPush {
 			self::$addSyncFolders = [];
 
 			if (isset($additionalFolders) && !is_array($additionalFolders)) {
-				ZLog::Write(LOGLEVEL_ERROR, 'ZPush::getAddSyncFolders() : The additional folders synchronization not available as array.');
+				SLog::Write(LOGLEVEL_ERROR, 'GSync::getAddSyncFolders() : The additional folders synchronization not available as array.');
 			} else {
 				foreach ($additionalFolders as $af) {
 					if (!is_array($af) || !isset($af['store']) || !isset($af['folderid']) || !isset($af['name']) || !isset($af['type'])) {
-						ZLog::Write(LOGLEVEL_ERROR, 'ZPush::getAddSyncFolders() : the additional folder synchronization is not configured correctly. Missing parameters. Entry will be ignored.');
+						SLog::Write(LOGLEVEL_ERROR, 'GSync::getAddSyncFolders() : the additional folder synchronization is not configured correctly. Missing parameters. Entry will be ignored.');
 
 						continue;
 					}
 
 					if ($af['store'] == '' || $af['folderid'] == '' || $af['name'] == '' || $af['type'] == '') {
-						ZLog::Write(LOGLEVEL_WARN, 'ZPush::getAddSyncFolders() : the additional folder synchronization is not configured correctly. Empty parameters. Entry will be ignored.');
+						SLog::Write(LOGLEVEL_WARN, 'GSync::getAddSyncFolders() : the additional folder synchronization is not configured correctly. Empty parameters. Entry will be ignored.');
 
 						continue;
 					}
 
 					if (!in_array($af['type'], [SYNC_FOLDER_TYPE_USER_NOTE, SYNC_FOLDER_TYPE_USER_CONTACT, SYNC_FOLDER_TYPE_USER_APPOINTMENT, SYNC_FOLDER_TYPE_USER_TASK, SYNC_FOLDER_TYPE_USER_MAIL])) {
-						ZLog::Write(LOGLEVEL_ERROR, sprintf("ZPush::getAddSyncFolders() : the type of the additional synchronization folder '%s is not permitted.", $af['name']));
+						SLog::Write(LOGLEVEL_ERROR, sprintf("GSync::getAddSyncFolders() : the type of the additional synchronization folder '%s is not permitted.", $af['name']));
 
 						continue;
 					}
 
 					// don't fail hard if no flags are set, but we at least warn about it
 					if (!isset($af['flags'])) {
-						ZLog::Write(LOGLEVEL_WARN, sprintf("ZPush::getAddSyncFolders() : the additional folder '%s' is not configured completely. Missing 'flags' parameter, defaulting to DeviceManager::FLD_FLAGS_NONE.", $af['name']));
+						SLog::Write(LOGLEVEL_WARN, sprintf("GSync::getAddSyncFolders() : the additional folder '%s' is not configured completely. Missing 'flags' parameter, defaulting to DeviceManager::FLD_FLAGS_NONE.", $af['name']));
 						$af['flags'] = DeviceManager::FLD_FLAGS_NONE;
 					}
 
@@ -616,7 +616,7 @@ class ZPush {
 	 * @return string
 	 */
 	public static function getDefaultFolderTypeFromFolderClass($folderclass) {
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("ZPush::getDefaultFolderTypeFromFolderClass('%s'): '%d'", $folderclass, self::$classes[$folderclass][self::CLASS_DEFAULTTYPE]));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("GSync::getDefaultFolderTypeFromFolderClass('%s'): '%d'", $folderclass, self::$classes[$folderclass][self::CLASS_DEFAULTTYPE]));
 
 		return self::$classes[$folderclass][self::CLASS_DEFAULTTYPE];
 	}
@@ -637,7 +637,7 @@ class ZPush {
 				break;
 			}
 		}
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("ZPush::GetFolderClassFromFolderType('%s'): %s", $foldertype, Utils::PrintAsString($class)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("GSync::GetFolderClassFromFolderType('%s'): %s", $foldertype, Utils::PrintAsString($class)));
 
 		return $class;
 	}
@@ -652,7 +652,7 @@ class ZPush {
 	 * @return
 	 */
 	public static function PrintGrommunioSyncLegal($message = '', $additionalMessage = '') {
-		ZLog::Write(LOGLEVEL_DEBUG, 'ZPush::PrintGrommunioSyncLegal()');
+		SLog::Write(LOGLEVEL_DEBUG, 'GSync::PrintGrommunioSyncLegal()');
 
 		if ($message) {
 			$message = '<h3>' . $message . '</h3>';
@@ -727,7 +727,7 @@ END;
 	 */
 	public static function GetSupportedProtocolVersions($valueOnly = false) {
 		$versions = implode(',', array_slice(self::$supportedASVersions, 0, (array_search(self::GetSupportedASVersion(), self::$supportedASVersions) + 1)));
-		ZLog::Write(LOGLEVEL_DEBUG, 'ZPush::GetSupportedProtocolVersions(): ' . $versions);
+		SLog::Write(LOGLEVEL_DEBUG, 'GSync::GetSupportedProtocolVersions(): ' . $versions);
 
 		if ($valueOnly === true) {
 			return $versions;
@@ -752,7 +752,7 @@ END;
 		}
 
 		$commands = implode(',', $asCommands);
-		ZLog::Write(LOGLEVEL_DEBUG, 'ZPush::GetSupportedCommands(): ' . $commands);
+		SLog::Write(LOGLEVEL_DEBUG, 'GSync::GetSupportedCommands(): ' . $commands);
 
 		return 'MS-ASProtocolCommands: ' . $commands;
 	}
@@ -793,7 +793,7 @@ END;
 	 */
 	public static function CommandNeedsAuthentication($commandCode) {
 		$stat = !self::checkCommandOptions($commandCode, self::UNAUTHENTICATED);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ZPush::CommandNeedsAuthentication(%d): %s', $commandCode, Utils::PrintAsString($stat)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('GSync::CommandNeedsAuthentication(%d): %s', $commandCode, Utils::PrintAsString($stat)));
 
 		return $stat;
 	}
@@ -807,7 +807,7 @@ END;
 	 */
 	public static function CommandNeedsProvisioning($commandCode) {
 		$stat = !self::checkCommandOptions($commandCode, self::UNPROVISIONED);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ZPush::CommandNeedsProvisioning(%s): %s', $commandCode, Utils::PrintAsString($stat)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('GSync::CommandNeedsProvisioning(%s): %s', $commandCode, Utils::PrintAsString($stat)));
 
 		return $stat;
 	}
@@ -821,7 +821,7 @@ END;
 	 */
 	public static function CommandNeedsPlainInput($commandCode) {
 		$stat = self::checkCommandOptions($commandCode, self::PLAININPUT);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ZPush::CommandNeedsPlainInput(%d): %s', $commandCode, Utils::PrintAsString($stat)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('GSync::CommandNeedsPlainInput(%d): %s', $commandCode, Utils::PrintAsString($stat)));
 
 		return $stat;
 	}
@@ -835,7 +835,7 @@ END;
 	 */
 	public static function HierarchyCommand($commandCode) {
 		$stat = self::checkCommandOptions($commandCode, self::HIERARCHYCOMMAND);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ZPush::HierarchyCommand(%d): %s', $commandCode, Utils::PrintAsString($stat)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('GSync::HierarchyCommand(%d): %s', $commandCode, Utils::PrintAsString($stat)));
 
 		return $stat;
 	}

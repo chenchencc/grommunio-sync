@@ -28,7 +28,7 @@ class WBXMLEncoder extends WBXMLDefs {
 	private $bodyparts;
 
 	public function __construct($output, $multipart = false) {
-		$this->log = ZLog::IsWbxmlDebugEnabled();
+		$this->log = SLog::IsWbxmlDebugEnabled();
 
 		$this->_out = $output;
 
@@ -56,10 +56,10 @@ class WBXMLEncoder extends WBXMLDefs {
 	public function startWBXML() {
 		if ($this->multipart) {
 			header('Content-Type: application/vnd.ms-sync.multipart');
-			ZLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->startWBXML() type: vnd.ms-sync.multipart');
+			SLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->startWBXML() type: vnd.ms-sync.multipart');
 		} else {
 			header('Content-Type: application/vnd.ms-sync.wbxml');
-			ZLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->startWBXML() type: vnd.ms-sync.wbxml');
+			SLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->startWBXML() type: vnd.ms-sync.wbxml');
 		}
 
 		$this->outByte(0x03); // WBXML 1.3
@@ -108,7 +108,7 @@ class WBXMLEncoder extends WBXMLDefs {
 			$this->_endTag();
 
 			if (count($this->_stack) == 0) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->endTag() WBXML output completed');
+				SLog::Write(LOGLEVEL_DEBUG, 'WBXMLEncoder->endTag() WBXML output completed');
 			}
 
 			if (count($this->_stack) == 0 && $this->multipart == true) {
@@ -432,7 +432,7 @@ class WBXMLEncoder extends WBXMLDefs {
 	}
 
 	/**
-	 * Logs a StartTag to ZLog.
+	 * Logs a StartTag to SLog.
 	 *
 	 * @param $tag
 	 * @param $nocontent
@@ -442,26 +442,26 @@ class WBXMLEncoder extends WBXMLDefs {
 	private function logStartTag($tag, $nocontent) {
 		$spaces = str_repeat(' ', count($this->logStack));
 		if ($nocontent) {
-			ZLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . " <{$tag}/>");
+			SLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . " <{$tag}/>");
 		} else {
 			array_push($this->logStack, $tag);
-			ZLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . " <{$tag}>");
+			SLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . " <{$tag}>");
 		}
 	}
 
 	/**
-	 * Logs a EndTag to ZLog.
+	 * Logs a EndTag to SLog.
 	 *
 	 * @return
 	 */
 	private function logEndTag() {
 		$spaces = str_repeat(' ', count($this->logStack));
 		$tag = array_pop($this->logStack);
-		ZLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . "</{$tag}>");
+		SLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . "</{$tag}>");
 	}
 
 	/**
-	 * Logs content to ZLog.
+	 * Logs content to SLog.
 	 *
 	 * @param string $content
 	 *
@@ -469,14 +469,14 @@ class WBXMLEncoder extends WBXMLDefs {
 	 */
 	private function logContent($content) {
 		$spaces = str_repeat(' ', count($this->logStack));
-		ZLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . $content);
+		SLog::Write(LOGLEVEL_WBXML, 'O ' . $spaces . $content);
 	}
 
 	/**
 	 * Processes the multipart response.
 	 */
 	private function processMultipart() {
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('WBXMLEncoder->processMultipart() with %d parts to be processed', $this->getBodypartsCount()));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('WBXMLEncoder->processMultipart() with %d parts to be processed', $this->getBodypartsCount()));
 		$len = ob_get_length();
 		$buffer = ob_get_clean();
 		$nrBodyparts = $this->getBodypartsCount();
@@ -489,7 +489,7 @@ class WBXMLEncoder extends WBXMLDefs {
 			$len = fstat($bp);
 			$len = (isset($len['size'])) ? $len['size'] : 0;
 			if ($len == 0) {
-				ZLog::Write(LOGLEVEL_WARN, sprintf('WBXMLEncoder->processMultipart(): the length of the body part at position %d is 0', $i));
+				SLog::Write(LOGLEVEL_WARN, sprintf('WBXMLEncoder->processMultipart(): the length of the body part at position %d is 0', $i));
 			}
 			fwrite($this->_out, pack('ii', $blockstart, $len));
 		}
@@ -513,6 +513,6 @@ class WBXMLEncoder extends WBXMLDefs {
 		} else {
 			$data = 'more than 512K of data';
 		}
-		ZLog::Write(LOGLEVEL_WBXML, 'WBXML-OUT: ' . $data, false);
+		SLog::Write(LOGLEVEL_WBXML, 'WBXML-OUT: ' . $data, false);
 	}
 }

@@ -113,16 +113,16 @@ class ProvisioningManager extends InterProcessData {
 		$p = (($policykey !== ASDevice::UNDEFINED && $policykey != $this->policyKey) || $this->policyKey == ASDevice::UNDEFINED);
 
 		if (!$noDebug || $p) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->ProvisioningRequired('%s') saved device key '%s': %s", $policykey, $this->policyKey, Utils::PrintAsString($p)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->ProvisioningRequired('%s') saved device key '%s': %s", $policykey, $this->policyKey, Utils::PrintAsString($p)));
 		}
 
 		if ($checkPolicies) {
 			$policyHash = $this->GetProvisioningObject()->GetPolicyHash();
 			if ($this->policyHash !== ASDevice::UNDEFINED && $this->policyHash != $policyHash) {
 				$p = true;
-				ZLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->ProvisioningRequired(): saved policy hash '%s' changed to '%s'. Provisioning required.", $this->policyHash, $policyHash));
+				SLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->ProvisioningRequired(): saved policy hash '%s' changed to '%s'. Provisioning required.", $this->policyHash, $policyHash));
 			} elseif (!$noDebug) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->ProvisioningRequired() saved policy hash '%s' matches", $policyHash));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->ProvisioningRequired() saved policy hash '%s' matches", $policyHash));
 			}
 		}
 
@@ -146,7 +146,7 @@ class ProvisioningManager extends InterProcessData {
 	 * @return bool status
 	 */
 	public function SetProvisioningPolicyKey($policykey) {
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->SetPolicyKey('%s')", $policykey));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->SetPolicyKey('%s')", $policykey));
 		$this->policyKey = $policykey;
 		$this->updatePolicyCache();
 
@@ -181,10 +181,10 @@ class ProvisioningManager extends InterProcessData {
 				$status = $data['data'][self::$devid]['status'];
 				// reset status to pending if it was already executed
 				if ($status >= SYNC_PROVISION_RWSTATUS_PENDING) {
-					ZLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->GetProvisioningWipeStatus(): REMOTE WIPE due for user '%s' on device '%s' - status: '%s'", self::$user, self::$devid, $status));
+					SLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->GetProvisioningWipeStatus(): REMOTE WIPE due for user '%s' on device '%s' - status: '%s'", self::$user, self::$devid, $status));
 					$status = SYNC_PROVISION_RWSTATUS_PENDING;
 				} else {
-					ZLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->GetProvisioningWipeStatus(): no remote wipe pending - status: '%s'", $status));
+					SLog::Write(LOGLEVEL_INFO, sprintf("ProvisioningManager->GetProvisioningWipeStatus(): no remote wipe pending - status: '%s'", $status));
 				}
 			}
 		}
@@ -200,7 +200,7 @@ class ProvisioningManager extends InterProcessData {
 	 * @return bool could fail if trying to update status to a wipe status which was not requested before
 	 */
 	public function SetProvisioningWipeStatus($status) {
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->SetProvisioningWipeStatus() set to '%d'", $status));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("ProvisioningManager->SetProvisioningWipeStatus() set to '%d'", $status));
 		$opts = ['http' => [
 			'method' => 'POST',
 			'header' => 'Content-Type: application/json',
@@ -215,7 +215,7 @@ class ProvisioningManager extends InterProcessData {
 		],
 		];
 		$ret = file_get_contents(ADMIN_API_WIPE_ENDPOINT . self::$user . '?devices=' . self::$devid, false, stream_context_create($opts));
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ProvisioningManager->SetProvisioningWipeStatus() admin API response: %s', trim(Utils::PrintAsString($ret))));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('ProvisioningManager->SetProvisioningWipeStatus() admin API response: %s', trim(Utils::PrintAsString($ret))));
 
 		return strpos($http_response_header[0], '201') !== false;
 	}
@@ -230,6 +230,6 @@ class ProvisioningManager extends InterProcessData {
 		$this->policyHash = $provisioning->GetPolicyHash();
 		$this->updatePolicyCache();
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ProvisioningManager->SavePolicyHash(): Set policy with hash: %s', $this->policyHash));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('ProvisioningManager->SavePolicyHash(): Set policy with hash: %s', $this->policyHash));
 	}
 }

@@ -55,14 +55,14 @@ class ImportChangesICS implements IImportChanges {
 
 		if ($folderid) {
 			$entryid = mapi_msgstore_entryidfromsourcekey($store, $folderid);
-			$folderidForBackendId = ZPush::GetDeviceManager()->GetFolderIdForBackendId($this->folderidHex);
+			$folderidForBackendId = GSync::GetDeviceManager()->GetFolderIdForBackendId($this->folderidHex);
 			// Only append backend id if the mapping backendid<->folderid is available.
 			if ($folderidForBackendId != $this->folderidHex) {
 				$this->prefix = $folderidForBackendId . ':';
 			}
 		} else {
 			$storeprops = mapi_getprops($store, [PR_IPM_SUBTREE_ENTRYID, PR_IPM_PUBLIC_FOLDERS_ENTRYID]);
-			if (ZPush::GetBackend()->GetImpersonatedUser() == 'system') {
+			if (GSync::GetBackend()->GetImpersonatedUser() == 'system') {
 				$entryid = $storeprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID];
 			} else {
 				$entryid = $storeprops[PR_IPM_SUBTREE_ENTRYID];
@@ -115,7 +115,7 @@ class ImportChangesICS implements IImportChanges {
 			$state = hex2bin('0000000000000000');
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('ImportChangesICS->Config(): initializing importer with state: 0x%s', bin2hex($state)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('ImportChangesICS->Config(): initializing importer with state: 0x%s', bin2hex($state)));
 
 		mapi_stream_write($stream, $state);
 		$this->statestream = $stream;
@@ -219,33 +219,33 @@ class ImportChangesICS implements IImportChanges {
 	 * @return bool
 	 */
 	private function isModificationAllowed($messageid) {
-		$sharedUser = ZPush::GetAdditionalSyncFolderStore(bin2hex($this->folderid));
+		$sharedUser = GSync::GetAdditionalSyncFolderStore(bin2hex($this->folderid));
 		// if this is either a user folder or SYSTEM and no restriction is set, we don't need to check
-		if (($sharedUser == false || $sharedUser == 'SYSTEM') && $this->cutoffdate === false && !ZPush::GetBackend()->GetImpersonatedUser()) {
+		if (($sharedUser == false || $sharedUser == 'SYSTEM') && $this->cutoffdate === false && !GSync::GetBackend()->GetImpersonatedUser()) {
 			return true;
 		}
 
 		// open the existing object
 		$entryid = mapi_msgstore_entryidfromsourcekey($this->store, $this->folderid, hex2bin($messageid));
 		if (!$entryid) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Error, unable to resolve message id: 0x%X", $messageid, mapi_last_hresult()));
+			SLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Error, unable to resolve message id: 0x%X", $messageid, mapi_last_hresult()));
 
 			return false;
 		}
 
 		$mapimessage = mapi_msgstore_openentry($this->store, $entryid);
 		if (!$mapimessage) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Error, unable to open entry id: 0x%X", $messageid, mapi_last_hresult()));
+			SLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Error, unable to open entry id: 0x%X", $messageid, mapi_last_hresult()));
 
 			return false;
 		}
 
 		// check the sync interval
 		if ($this->cutoffdate !== false) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->isModificationAllowed('%s'): cut off date is: %s", $messageid, $this->cutoffdate));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->isModificationAllowed('%s'): cut off date is: %s", $messageid, $this->cutoffdate));
 			if (($this->contentClass == 'Email' && !MAPIUtils::IsInEmailSyncInterval($this->store, $mapimessage, $this->cutoffdate))
 				  || ($this->contentClass == 'Calendar' && !MAPIUtils::IsInCalendarSyncInterval($this->store, $mapimessage, $this->cutoffdate))) {
-				ZLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Message in %s is outside the sync interval. Data not saved.", $messageid, $this->contentClass));
+				SLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Message in %s is outside the sync interval. Data not saved.", $messageid, $this->contentClass));
 
 				return false;
 			}
@@ -253,7 +253,7 @@ class ImportChangesICS implements IImportChanges {
 
 		// check if not private
 		if (MAPIUtils::IsMessageSharedAndPrivate($this->folderid, $mapimessage)) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Message is shared and marked as private. Data not saved.", $messageid));
+			SLog::Write(LOGLEVEL_WARN, sprintf("ImportChangesICS->isModificationAllowed('%s'): Message is shared and marked as private. Data not saved.", $messageid));
 
 			return false;
 		}
@@ -287,7 +287,7 @@ class ImportChangesICS implements IImportChanges {
 		$this->conflictsContentParameters = $contentparameters;
 		$this->conflictsState = $state;
 
-		ZLog::Write(LOGLEVEL_DEBUG, 'ImportChangesICS->LoadConflicts(): will be loaded later if necessary');
+		SLog::Write(LOGLEVEL_DEBUG, 'ImportChangesICS->LoadConflicts(): will be loaded later if necessary');
 
 		return true;
 	}
@@ -301,13 +301,13 @@ class ImportChangesICS implements IImportChanges {
 	private function lazyLoadConflicts() {
 		if (!isset($this->session) || !isset($this->store) || !isset($this->folderid)
 			|| !isset($this->conflictsContentParameters) || $this->conflictsState === false) {
-			ZLog::Write(LOGLEVEL_WARN, 'ImportChangesICS->lazyLoadConflicts(): can not load potential conflicting changes in lazymode for conflict detection. Missing information');
+			SLog::Write(LOGLEVEL_WARN, 'ImportChangesICS->lazyLoadConflicts(): can not load potential conflicting changes in lazymode for conflict detection. Missing information');
 
 			return false;
 		}
 
 		if (!$this->conflictsLoaded) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'ImportChangesICS->lazyLoadConflicts(): loading..');
+			SLog::Write(LOGLEVEL_DEBUG, 'ImportChangesICS->lazyLoadConflicts(): loading..');
 
 			// configure an exporter so we can detect conflicts
 			$exporter = new ExportChangesICS($this->session, $this->store, $this->folderid);
@@ -319,7 +319,7 @@ class ImportChangesICS implements IImportChanges {
 			// if this takes "too long" we cancel this operation!
 			$potConflicts = $exporter->GetChangeCount();
 			if ($potConflicts > 100) {
-				ZLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): conflict detection abandoned as there are too many (%d) changes to be exported.', $potConflicts));
+				SLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): conflict detection abandoned as there are too many (%d) changes to be exported.', $potConflicts));
 				$this->conflictsLoaded = true;
 
 				return false;
@@ -334,7 +334,7 @@ class ImportChangesICS implements IImportChanges {
 					// stop if this takes more than 15 seconds and there are more than 5 changes still to be exported
 					// within 20 seconds this should be finished or it will not be performed
 					if ((time() - $started) > 15 && ($potConflicts - $exported) > 5) {
-						ZLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): conflict detection cancelled as operation is too slow. In %d seconds only %d from %d changes were processed.', (time() - $started), $exported, $potConflicts));
+						SLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): conflict detection cancelled as operation is too slow. In %d seconds only %d from %d changes were processed.', (time() - $started), $exported, $potConflicts));
 						$this->conflictsLoaded = true;
 
 						return false;
@@ -343,7 +343,7 @@ class ImportChangesICS implements IImportChanges {
 			}
 			// something really bad happened while exporting changes
 			catch (StatusException $stex) {
-				ZLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): got StatusException code %d while exporting changes. Ignore and mark conflicts as loaded.', $stex->getCode()));
+				SLog::Write(LOGLEVEL_WARN, sprintf('ImportChangesICS->lazyLoadConflicts(): got StatusException code %d while exporting changes. Ignore and mark conflicts as loaded.', $stex->getCode()));
 			}
 			$this->conflictsLoaded = true;
 		}
@@ -386,10 +386,10 @@ class ImportChangesICS implements IImportChanges {
 					return false;
 				}
 
-				ZLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageChange('%s','%s'): Conflict detected. Data from Server will be dropped! PIM overwrites server.", $id, get_class($message)));
+				SLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageChange('%s','%s'): Conflict detected. Data from Server will be dropped! PIM overwrites server.", $id, get_class($message)));
 			}
 			if ($this->memChanges->IsDeleted($id)) {
-				ZLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageChange('%s','%s'): Conflict detected. Data from PIM will be dropped! Object was deleted on server.", $id, get_class($message)));
+				SLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageChange('%s','%s'): Conflict detected. Data from PIM will be dropped! Object was deleted on server.", $id, get_class($message)));
 
 				return false;
 			}
@@ -432,9 +432,9 @@ class ImportChangesICS implements IImportChanges {
 		// check for conflicts
 		$this->lazyLoadConflicts();
 		if ($this->memChanges->IsChanged($id)) {
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageDeletion('%s'): Conflict detected. Data from Server will be dropped! PIM deleted object.", $id));
+			SLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageDeletion('%s'): Conflict detected. Data from Server will be dropped! PIM deleted object.", $id));
 		} elseif ($this->memChanges->IsDeleted($id)) {
-			ZLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageDeletion('%s'): Conflict detected. Data is already deleted. Request will be ignored.", $id));
+			SLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageDeletion('%s'): Conflict detected. Data is already deleted. Request will be ignored.", $id));
 
 			return true;
 		}
@@ -464,7 +464,7 @@ class ImportChangesICS implements IImportChanges {
 
 		// if $fsk is set, we convert it into a backend id.
 		if ($fsk) {
-			$fsk = ZPush::GetDeviceManager()->GetBackendIdForFolderId($fsk);
+			$fsk = GSync::GetDeviceManager()->GetBackendIdForFolderId($fsk);
 		}
 
 		// read flag change for our current folder
@@ -481,7 +481,7 @@ class ImportChangesICS implements IImportChanges {
 			 *
 			$this->lazyLoadConflicts();
 			if($this->memChanges->IsDeleted($id)) {
-				ZLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageReadFlag('%s'): Conflict detected. Data is already deleted. Request will be ignored.", $id));
+				SLog::Write(LOGLEVEL_INFO, sprintf("ImportChangesICS->ImportMessageReadFlag('%s'): Conflict detected. Data is already deleted. Request will be ignored.", $id));
 				return true;
 			}
 			 */
@@ -497,7 +497,7 @@ class ImportChangesICS implements IImportChanges {
 			if (!$fsk) {
 				throw new StatusException(sprintf("ImportChangesICS->ImportMessageReadFlag('%s','%d'): Error setting read state. The message is in another folder but id is unknown as no short folder id is available. Please remove your device states to fully resync your device. Operation ignored.", $id, $flags), SYNC_STATUS_OBJECTNOTFOUND);
 			}
-			$store = ZPush::GetBackend()->GetMAPIStoreForFolderId(ZPush::GetAdditionalSyncFolderStore($fsk), $fsk);
+			$store = GSync::GetBackend()->GetMAPIStoreForFolderId(GSync::GetAdditionalSyncFolderStore($fsk), $fsk);
 			$entryid = mapi_msgstore_entryidfromsourcekey($store, hex2bin($fsk), hex2bin($sk));
 			$realMessage = mapi_msgstore_openentry($store, $entryid);
 			$flag = 0;
@@ -505,7 +505,7 @@ class ImportChangesICS implements IImportChanges {
 				$flag |= CLEAR_READ_FLAG;
 			}
 			$p = mapi_message_setreadflag($realMessage, $flag);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportMessageReadFlag('%s','%d'): setting readflag on message: 0x%X", $id, $flags, mapi_last_hresult()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportMessageReadFlag('%s','%d'): setting readflag on message: 0x%X", $id, $flags, mapi_last_hresult()));
 		}
 
 		return true;
@@ -547,7 +547,7 @@ class ImportChangesICS implements IImportChanges {
 			$code = SYNC_MOVEITEMSSTATUS_INVALIDSOURCEID;
 			$mapiLastHresult = mapi_last_hresult();
 			// if we move to the trash and the source message is not found, we can also just tell the mobile that we successfully moved to avoid errors (ZP-624)
-			if ($newfolder == ZPush::GetBackend()->GetWasteBasket()) {
+			if ($newfolder == GSync::GetBackend()->GetWasteBasket()) {
 				$code = SYNC_MOVEITEMSSTATUS_SUCCESS;
 			}
 			$errorCase = !$entryid ? 'resolve source message id' : 'open source message';
@@ -561,7 +561,7 @@ class ImportChangesICS implements IImportChanges {
 		}
 
 		// get correct mapi store for the destination folder
-		$dststore = ZPush::GetBackend()->GetMAPIStoreForFolderId(ZPush::GetAdditionalSyncFolderStore($newfolder), $newfolder);
+		$dststore = GSync::GetBackend()->GetMAPIStoreForFolderId(GSync::GetAdditionalSyncFolderStore($newfolder), $newfolder);
 		if ($dststore === false) {
 			throw new StatusException(sprintf("ImportChangesICS->ImportMessageMove('%s','%s'): Error, unable to open store of destination folder", $sk, $newfolder), SYNC_MOVEITEMSSTATUS_INVALIDDESTID);
 		}
@@ -612,7 +612,7 @@ class ImportChangesICS implements IImportChanges {
 		if (isset($sourcekeyprops[PR_SOURCE_KEY]) && $sourcekeyprops[PR_SOURCE_KEY]) {
 			$prefix = '';
 			// prepend the destination short folderid, if it exists
-			$destShortId = ZPush::GetDeviceManager()->GetFolderIdForBackendId($newfolder);
+			$destShortId = GSync::GetDeviceManager()->GetFolderIdForBackendId($newfolder);
 			if ($destShortId !== $newfolder) {
 				$prefix = $destShortId . ':';
 			}
@@ -652,7 +652,7 @@ class ImportChangesICS implements IImportChanges {
 			// the root folder is "0" - get IPM_SUBTREE
 			if ($parent == '0') {
 				$parentprops = mapi_getprops($this->store, [PR_IPM_SUBTREE_ENTRYID, PR_IPM_PUBLIC_FOLDERS_ENTRYID]);
-				if (ZPush::GetBackend()->GetImpersonatedUser() == 'system' && isset($parentprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID])) {
+				if (GSync::GetBackend()->GetImpersonatedUser() == 'system' && isset($parentprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID])) {
 					$parentfentryid = $parentprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID];
 				} elseif (isset($parentprops[PR_IPM_SUBTREE_ENTRYID])) {
 					$parentfentryid = $parentprops[PR_IPM_SUBTREE_ENTRYID];
@@ -682,11 +682,11 @@ class ImportChangesICS implements IImportChanges {
 			if (isset($props[PR_SOURCE_KEY])) {
 				$folder->BackendId = bin2hex($props[PR_SOURCE_KEY]);
 				$folderOrigin = DeviceManager::FLD_ORIGIN_USER;
-				if (ZPush::GetBackend()->GetImpersonatedUser()) {
+				if (GSync::GetBackend()->GetImpersonatedUser()) {
 					$folderOrigin = DeviceManager::FLD_ORIGIN_IMPERSONATED;
 				}
-				$folder->serverid = ZPush::GetDeviceManager()->GetFolderIdForBackendId($folder->BackendId, true, $folderOrigin, $folder->displayname);
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): Created folder '%s' with id: '%s' backendid: '%s'", $displayname, $folder->serverid, $folder->BackendId));
+				$folder->serverid = GSync::GetDeviceManager()->GetFolderIdForBackendId($folder->BackendId, true, $folderOrigin, $folder->displayname);
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): Created folder '%s' with id: '%s' backendid: '%s'", $displayname, $folder->serverid, $folder->BackendId));
 
 				return $folder;
 			}
@@ -718,7 +718,7 @@ class ImportChangesICS implements IImportChanges {
 		// get the real parent source key from mapi
 		if ($parent == '0') {
 			$parentprops = mapi_getprops($this->store, [PR_IPM_SUBTREE_ENTRYID, PR_IPM_PUBLIC_FOLDERS_ENTRYID]);
-			if (ZPush::GetBackend()->GetImpersonatedUser() == 'system') {
+			if (GSync::GetBackend()->GetImpersonatedUser() == 'system') {
 				$parentfentryid = $parentprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID];
 			} else {
 				$parentfentryid = $parentprops[PR_IPM_SUBTREE_ENTRYID];
@@ -727,7 +727,7 @@ class ImportChangesICS implements IImportChanges {
 
 			$rootfolderprops = mapi_getprops($mapifolder, [PR_SOURCE_KEY]);
 			$parent = bin2hex($rootfolderprops[PR_SOURCE_KEY]);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): resolved AS parent '0' to sourcekey '%s'", $parent));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): resolved AS parent '0' to sourcekey '%s'", $parent));
 		}
 
 		// a changed parent id means that the folder should be moved
@@ -759,9 +759,9 @@ class ImportChangesICS implements IImportChanges {
 
 			// the parent changed, but we got a backendID as parent and have to return an AS folderid - the parent-backendId must be mapped at this point already
 			if ($folder->parentid != 0) {
-				$folder->parentid = ZPush::GetDeviceManager()->GetFolderIdForBackendId($parent);
+				$folder->parentid = GSync::GetDeviceManager()->GetFolderIdForBackendId($parent);
 			}
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): Moved folder '%s' with id: %s/%s from: %s to: %s/%s", $displayname, $folder->serverid, $folder->BackendId, bin2hex($props[PR_PARENT_SOURCE_KEY]), $folder->parentid, $parent_org));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderChange(): Moved folder '%s' with id: %s/%s from: %s to: %s/%s", $displayname, $folder->serverid, $folder->BackendId, bin2hex($props[PR_PARENT_SOURCE_KEY]), $folder->parentid, $parent_org));
 
 			return $folder;
 		}
@@ -774,7 +774,7 @@ class ImportChangesICS implements IImportChanges {
 			throw new StatusException(sprintf("ImportChangesICS->ImportFolderChange('%s','%s','%s'): Error, mapi_savechanges() failed: 0x%X", Utils::PrintAsString($folder->serverid), $folder->parentid, $displayname, mapi_last_hresult()), SYNC_FSSTATUS_SERVERERROR);
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, "Imported changes for folder: {$id}");
+		SLog::Write(LOGLEVEL_DEBUG, "Imported changes for folder: {$id}");
 
 		return true;
 	}
@@ -791,7 +791,7 @@ class ImportChangesICS implements IImportChanges {
 	public function ImportFolderDeletion($folder) {
 		$id = $folder->BackendId;
 		$parent = isset($folder->parentid) ? $folder->parentid : false;
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderDeletion('%s','%s'): importing folder deletetion", $id, $parent));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("ImportChangesICS->ImportFolderDeletion('%s','%s'): importing folder deletetion", $id, $parent));
 
 		$folderentryid = mapi_msgstore_entryidfromsourcekey($this->store, hex2bin($id));
 		if (!$folderentryid) {

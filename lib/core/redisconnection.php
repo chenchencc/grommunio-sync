@@ -49,7 +49,7 @@ EOF;
 		try {
 			return $this->redisObj->get($key);
 		} catch (Exception $e) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('%s->getKey(): %s', get_class($this), $e->getMessage()));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('%s->getKey(): %s', get_class($this), $e->getMessage()));
 		}
 	}
 
@@ -61,7 +61,7 @@ EOF;
 
 			return $this->redisObj->set($key, $value);
 		} catch (Exception $e) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('%s->setKey(): %s', get_class($this), $e->getMessage()));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('%s->setKey(): %s', get_class($this), $e->getMessage()));
 		}
 	}
 
@@ -69,7 +69,7 @@ EOF;
 		try {
 			return $this->redisObj->del($key);
 		} catch (Exception $e) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('%s->delKey(): %s', get_class($this), $e->getMessage()));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('%s->delKey(): %s', get_class($this), $e->getMessage()));
 		}
 	}
 

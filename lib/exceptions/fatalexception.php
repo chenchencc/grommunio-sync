@@ -6,5 +6,5 @@
  *
  * Main class for fatal grommunio-Sync exceptions execution stops
  */
-class FatalException extends ZPushException {
+class FatalException extends GSyncException {
 }

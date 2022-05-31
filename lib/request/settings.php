@@ -78,7 +78,7 @@ class Settings extends RequestProcessor {
 
 					default:
 						// TODO: a special status code needed?
-						ZLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to use get in request", $propertyName));
+						SLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to use get in request", $propertyName));
 				}
 			} elseif (self::$decoder->getElementStartTag(SYNC_SETTINGS_SET)) {
 				// set is available for OOF, device password and device information
@@ -106,14 +106,14 @@ class Settings extends RequestProcessor {
 
 					default:
 						// TODO: a special status code needed?
-						ZLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to use set in request", $propertyName));
+						SLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to use set in request", $propertyName));
 				}
 
 				if (!self::$decoder->getElementEndTag()) {
 					return false;
 				} // SYNC_SETTINGS_SET
 			} else {
-				ZLog::Write(LOGLEVEL_WARN, sprintf("Neither get nor set found for property '%s'", $propertyName));
+				SLog::Write(LOGLEVEL_WARN, sprintf("Neither get nor set found for property '%s'", $propertyName));
 
 				return false;
 			}

@@ -119,7 +119,7 @@ class Syslog extends Log {
 	 *
 	 * @return int one of many LOG_* syslog level
 	 */
-	protected function GetZpushLogLevelToSyslogLogLevel($loglevel) {
+	protected function GetGsyncLogLevelToSyslogLogLevel($loglevel) {
 		switch ($loglevel) {
 			case LOGLEVEL_FATAL: return LOG_ALERT;
 
@@ -206,7 +206,7 @@ break;
 		} else {
 			openlog($this->GenerateProgramName(), LOG_PID, LOG_SYSLOG_FACILITY);
 			syslog(
-				$this->GetZpushLogLevelToSyslogLogLevel($loglevel),
+				$this->GetGsyncLogLevelToSyslogLogLevel($loglevel),
 				$this->BuildLogString($loglevel, $message)
 			);
 		}

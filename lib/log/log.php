@@ -242,7 +242,7 @@ abstract class Log {
 
 	/**
 	 * This function is used as an event for log implementer.
-	 * It happens when the ZLog static class is finished with the initialization of this instance.
+	 * It happens when the SLog static class is finished with the initialization of this instance.
 	 */
 	public function AfterInitialize() {
 	}

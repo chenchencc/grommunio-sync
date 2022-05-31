@@ -227,7 +227,7 @@ if (!function_exists('memory_get_peak_usage')) {
 	 * @param bool $real_usage
 	 */
 	function memory_get_peak_usage($real_usage = false) {
-		ZLog::Write(LOGLEVEL_DEBUG, 'memory_get_peak_usage() is not available on this system. The value of memory_get_usage() will be used.');
+		SLog::Write(LOGLEVEL_DEBUG, 'memory_get_peak_usage() is not available on this system. The value of memory_get_usage() will be used.');
 
 		return memory_get_usage();
 	}

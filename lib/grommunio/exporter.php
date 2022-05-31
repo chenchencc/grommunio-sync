@@ -48,7 +48,7 @@ class ExportChangesICS implements IExportChanges {
 				$entryid = mapi_msgstore_entryidfromsourcekey($store, $folderid);
 			} else {
 				$storeprops = mapi_getprops($this->store, [PR_IPM_SUBTREE_ENTRYID, PR_IPM_PUBLIC_FOLDERS_ENTRYID]);
-				if (ZPush::GetBackend()->GetImpersonatedUser() == 'system') {
+				if (GSync::GetBackend()->GetImpersonatedUser() == 'system') {
 					$entryid = $storeprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID];
 				} else {
 					$entryid = $storeprops[PR_IPM_SUBTREE_ENTRYID];
@@ -59,7 +59,7 @@ class ExportChangesICS implements IExportChanges {
 			if ($entryid) {
 				$folder = mapi_msgstore_openentry($this->store, $entryid);
 				if (!$folder) {
-					ZLog::Write(LOGLEVEL_WARN, sprintf('ExportChangesICS(): Error, mapi_msgstore_openentry() failed: 0x%08X', mapi_last_hresult()));
+					SLog::Write(LOGLEVEL_WARN, sprintf('ExportChangesICS(): Error, mapi_msgstore_openentry() failed: 0x%08X', mapi_last_hresult()));
 				}
 			}
 
@@ -109,7 +109,7 @@ class ExportChangesICS implements IExportChanges {
 			// On subsequent syncs, we do want to receive delete events.
 			if (strlen($state) == 0 || bin2hex(substr($state, 4, 4)) == '00000000') {
 				if (!($this->flags & BACKEND_DISCARD_DATA)) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'ExportChangesICS->Config(): syncing initial data');
+					SLog::Write(LOGLEVEL_DEBUG, 'ExportChangesICS->Config(): syncing initial data');
 				}
 				$this->exporterflags |= SYNC_NO_SOFT_DELETIONS | SYNC_NO_DELETIONS;
 			}
@@ -127,7 +127,7 @@ class ExportChangesICS implements IExportChanges {
 		}
 
 		if (!($this->flags & BACKEND_DISCARD_DATA)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('ExportChangesICS->Config() initialized with state: 0x%s', bin2hex($state)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('ExportChangesICS->Config() initialized with state: 0x%s', bin2hex($state)));
 		}
 
 		mapi_stream_write($stream, $state);
@@ -216,7 +216,7 @@ class ExportChangesICS implements IExportChanges {
 
 		$changes = mapi_exportchanges_getchangecount($this->exporter);
 		if ($changes || !($this->flags & BACKEND_DISCARD_DATA)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("ExportChangesICS->InitializeExporter() successfully. %d changes ready to sync for '%s'.", $changes, ($this->folderid) ? bin2hex($this->folderid) : 'hierarchy'));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("ExportChangesICS->InitializeExporter() successfully. %d changes ready to sync for '%s'.", $changes, ($this->folderid) ? bin2hex($this->folderid) : 'hierarchy'));
 		}
 
 		return $ret;
@@ -287,7 +287,7 @@ class ExportChangesICS implements IExportChanges {
 	 */
 	public function Synchronize() {
 		if ($this->flags & BACKEND_DISCARD_DATA) {
-			ZLog::Write(LOGLEVEL_WARN, 'ExportChangesICS->Synchronize(): not supported in combination with the BACKEND_DISCARD_DATA flag.');
+			SLog::Write(LOGLEVEL_WARN, 'ExportChangesICS->Synchronize(): not supported in combination with the BACKEND_DISCARD_DATA flag.');
 
 			return false;
 		}

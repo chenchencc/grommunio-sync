@@ -19,14 +19,14 @@ class Provisioning extends RequestProcessor {
 		$status = SYNC_PROVISION_STATUS_SUCCESS;
 		$policystatus = SYNC_PROVISION_POLICYSTATUS_SUCCESS;
 
-		$rwstatus = ZPush::GetProvisioningManager()->GetProvisioningWipeStatus();
+		$rwstatus = GSync::GetProvisioningManager()->GetProvisioningWipeStatus();
 		$rwstatusWiped = false;
 		$deviceInfoSet = false;
 		$wipeRequest = !($rwstatus < SYNC_PROVISION_RWSTATUS_PENDING);
 
 		// if this is a regular provisioning require that an authenticated remote user
 		if (!$wipeRequest) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'RequestProcessor::HandleProvision(): Forcing delayed Authentication');
+			SLog::Write(LOGLEVEL_DEBUG, 'RequestProcessor::HandleProvision(): Forcing delayed Authentication');
 			self::Authenticate();
 		}
 
@@ -138,9 +138,9 @@ class Provisioning extends RequestProcessor {
 					$deviceinformation->Status = SYNC_SETTINGSSTATUS_SUCCESS;
 					if (!$wipeRequest) {
 						// for this operation the device manager is available
-						ZPush::GetDeviceManager()->SaveDeviceInformation($deviceinformation);
+						GSync::GetDeviceManager()->SaveDeviceInformation($deviceinformation);
 					} else {
-						ZLog::Write(LOGLEVEL_DEBUG, 'Ignoring incoming device information as WIPE is due.');
+						SLog::Write(LOGLEVEL_DEBUG, 'Ignoring incoming device information as WIPE is due.');
 					}
 					if (!self::$decoder->getElementEndTag()) {  // SYNC_SETTINGS_SET
 						return false;
@@ -153,7 +153,7 @@ class Provisioning extends RequestProcessor {
 
 				default:
 					// TODO: a special status code needed?
-					ZLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to be used in a provision request", $requestName));
+					SLog::Write(LOGLEVEL_WARN, sprintf("This property ('%s') is not allowed to be used in a provision request", $requestName));
 			}
 		}
 
@@ -162,14 +162,14 @@ class Provisioning extends RequestProcessor {
 		}
 
 		if (PROVISIONING !== true) {
-			ZLog::Write(LOGLEVEL_INFO, 'No policies deployed to device');
+			SLog::Write(LOGLEVEL_INFO, 'No policies deployed to device');
 			$policystatus = SYNC_PROVISION_POLICYSTATUS_NOPOLICY;
 		}
 
 		self::$encoder->StartWBXML();
 
 		// just create a temporary key (i.e. iPhone OS4 Beta does not like policykey 0 in response)
-		$policykey = ZPush::GetProvisioningManager()->GenerateProvisioningPolicyKey();
+		$policykey = GSync::GetProvisioningManager()->GenerateProvisioningPolicyKey();
 
 		self::$encoder->startTag(SYNC_PROVISION_PROVISION);
 
@@ -210,16 +210,16 @@ class Provisioning extends RequestProcessor {
 				self::$encoder->startTag(SYNC_PROVISION_EASPROVISIONDOC);
 
 				// get the provisioning object and log the loaded policy values
-				$prov = ZPush::GetProvisioningManager()->GetProvisioningObject(true);
+				$prov = GSync::GetProvisioningManager()->GetProvisioningObject(true);
 				if (!$prov->Check()) {
 					throw new FatalException('Invalid policies!');
 				}
 
-				ZPush::GetProvisioningManager()->SavePolicyHash($prov);
+				GSync::GetProvisioningManager()->SavePolicyHash($prov);
 				$prov->Encode(self::$encoder);
 				self::$encoder->endTag();
 			} else {
-				ZLog::Write(LOGLEVEL_WARN, 'Wrong policy type');
+				SLog::Write(LOGLEVEL_WARN, 'Wrong policy type');
 				self::$topCollector->AnnounceInformation('Policytype not supported', true);
 
 				return false;
@@ -233,14 +233,14 @@ class Provisioning extends RequestProcessor {
 
 		// set the new final policy key in the provisioning manager
 		if (!$phase2 && !$wipeRequest) {
-			ZPush::GetProvisioningManager()->SetProvisioningPolicyKey($policykey);
+			GSync::GetProvisioningManager()->SetProvisioningPolicyKey($policykey);
 			self::$topCollector->AnnounceInformation('Policies deployed', true);
 		}
 
 		// wipe data if a higher RWSTATUS is requested
 		if ($rwstatus > SYNC_PROVISION_RWSTATUS_OK && $policystatus === SYNC_PROVISION_POLICYSTATUS_SUCCESS) {
 			self::$encoder->startTag(SYNC_PROVISION_REMOTEWIPE, false, true);
-			ZPush::GetProvisioningManager()->SetProvisioningWipeStatus(($rwstatusWiped) ? SYNC_PROVISION_RWSTATUS_WIPED : SYNC_PROVISION_RWSTATUS_REQUESTED);
+			GSync::GetProvisioningManager()->SetProvisioningWipeStatus(($rwstatusWiped) ? SYNC_PROVISION_RWSTATUS_WIPED : SYNC_PROVISION_RWSTATUS_REQUESTED);
 			self::$topCollector->AnnounceInformation(sprintf('Remote wipe %s', ($rwstatusWiped) ? 'executed' : 'requested'), true);
 		}
 

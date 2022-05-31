@@ -53,7 +53,7 @@ class DeviceManager extends InterProcessData {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->statemachine = ZPush::GetStateMachine();
+		$this->statemachine = GSync::GetStateMachine();
 		$this->deviceHash = false;
 		$this->saveDevice = true;
 		$this->windowSize = [];
@@ -73,7 +73,7 @@ class DeviceManager extends InterProcessData {
 			$this->device->Initialize(self::$devid, Request::GetDeviceType(), Request::GetGETUser(), Request::GetUserAgent());
 			$this->loadDeviceData();
 
-			ZPush::GetTopCollector()->SetUserAgent($this->device->GetDeviceUserAgent());
+			GSync::GetTopCollector()->SetUserAgent($this->device->GetDeviceUserAgent());
 		} else {
 			throw new FatalNotImplementedException('Can not proceed without a device id.');
 		}
@@ -146,12 +146,12 @@ class DeviceManager extends InterProcessData {
 
 		// data to be saved
 		if ($this->device->IsDataChanged() && Request::IsValidDeviceID() && $this->saveDevice) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->Save(): Device data changed');
+			SLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->Save(): Device data changed');
 
 			try {
 				// check if this is the first time the device data is saved and it is authenticated. If so, link the user to the device id
 				if ($this->device->IsNewDevice() && RequestProcessor::isUserAuthenticated()) {
-					ZLog::Write(LOGLEVEL_INFO, sprintf("Linking device ID '%s' to user '%s'", self::$devid, $this->device->GetDeviceUser()));
+					SLog::Write(LOGLEVEL_INFO, sprintf("Linking device ID '%s' to user '%s'", self::$devid, $this->device->GetDeviceUser()));
 					$this->statemachine->LinkUserDevice($this->device->GetDeviceUser(), self::$devid);
 				}
 
@@ -162,17 +162,17 @@ class DeviceManager extends InterProcessData {
 
 					// update deviceuser stat in redis as well
 					$this->setDeviceUserData($this->type, [self::$user => $this->device], self::$devid, -1, $doCas = 'merge');
-					ZLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->Save(): Device data saved');
+					SLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->Save(): Device data saved');
 				}
 			} catch (StateNotFoundException $snfex) {
-				ZLog::Write(LOGLEVEL_ERROR, 'DeviceManager->Save(): Exception: ' . $snfex->getMessage());
+				SLog::Write(LOGLEVEL_ERROR, 'DeviceManager->Save(): Exception: ' . $snfex->getMessage());
 			}
 		}
 
 		// remove old search data
 		$oldpid = $this->loopdetection->ProcessLoopDetectionGetOutdatedSearchPID();
 		if ($oldpid) {
-			ZPush::GetBackend()->GetSearchProvider()->TerminateSearch($oldpid);
+			GSync::GetBackend()->GetSearchProvider()->TerminateSearch($oldpid);
 		}
 
 		// we terminated this process
@@ -189,7 +189,7 @@ class DeviceManager extends InterProcessData {
 	 * @param bool $doSave
 	 */
 	public function DoAutomaticASDeviceSaving($doSave) {
-		ZLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->DoAutomaticASDeviceSaving(): save automatically: ' . Utils::PrintAsString($doSave));
+		SLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->DoAutomaticASDeviceSaving(): save automatically: ' . Utils::PrintAsString($doSave));
 		$this->saveDevice = $doSave;
 	}
 
@@ -202,7 +202,7 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function SaveDeviceInformation($deviceinformation) {
-		ZLog::Write(LOGLEVEL_DEBUG, 'Saving submitted device information');
+		SLog::Write(LOGLEVEL_DEBUG, 'Saving submitted device information');
 
 		// set the user agent
 		if (isset($deviceinformation->useragent)) {
@@ -275,7 +275,7 @@ class DeviceManager extends InterProcessData {
 	public function GetFolderIdFromCacheByClass($class) {
 		$folderidforClass = false;
 		// look at the default foldertype for this class
-		$type = ZPush::getDefaultFolderTypeFromFolderClass($class);
+		$type = GSync::getDefaultFolderTypeFromFolderClass($class);
 
 		if ($type && $type > SYNC_FOLDER_TYPE_OTHER && $type < SYNC_FOLDER_TYPE_USER_MAIL) {
 			$folderids = $this->device->GetAllFolderIds();
@@ -295,7 +295,7 @@ class DeviceManager extends InterProcessData {
 			}
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->GetFolderIdFromCacheByClass('%s'): '%s' => '%s'", $class, $type, $folderidforClass));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->GetFolderIdFromCacheByClass('%s'): '%s' => '%s'", $class, $type, $folderidforClass));
 
 		return $folderidforClass;
 	}
@@ -316,7 +316,7 @@ class DeviceManager extends InterProcessData {
 			throw new NoHierarchyCacheAvailableException(sprintf("Folderid '%s' is not fully synchronized on the device", $folderid));
 		}
 
-		$class = ZPush::GetFolderClassFromFolderType($typeFromCache);
+		$class = GSync::GetFolderClassFromFolderType($typeFromCache);
 		if ($class === false) {
 			throw new NotImplementedException(sprintf("Folderid '%s' is saved to be of type '%d' but this type is not implemented", $folderid, $typeFromCache));
 		}
@@ -340,11 +340,11 @@ class DeviceManager extends InterProcessData {
 		foreach ($this->device->GetAdditionalFolders() as $df) {
 			if (!isset($df['flags'])) {
 				$df['flags'] = 0;
-				ZLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->GetAdditionalUserSyncFolders(): Additional folder '%s' has no flags.", $df['name']));
+				SLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->GetAdditionalUserSyncFolders(): Additional folder '%s' has no flags.", $df['name']));
 			}
 			if (!isset($df['parentid'])) {
 				$df['parentid'] = '0';
-				ZLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->GetAdditionalUserSyncFolders(): Additional folder '%s' has no parentid.", $df['name']));
+				SLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->GetAdditionalUserSyncFolders(): Additional folder '%s' has no parentid.", $df['name']));
 			}
 
 			$folder = $this->BuildSyncFolderObject($df['store'], $df['folderid'], $df['parentid'], $df['name'], $df['type'], $df['flags'], DeviceManager::FLD_ORIGIN_SHARED);
@@ -424,7 +424,7 @@ class DeviceManager extends InterProcessData {
 	public function RemoveBrokenMessage($id) {
 		$folderid = $this->getLatestFolder();
 		if ($this->device->RemoveIgnoredMessage($folderid, $id)) {
-			ZLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->RemoveBrokenMessage('%s', '%s'): cleared data about previously ignored message", $folderid, $id));
+			SLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->RemoveBrokenMessage('%s', '%s'): cleared data about previously ignored message", $folderid, $id));
 
 			return true;
 		}
@@ -460,12 +460,12 @@ class DeviceManager extends InterProcessData {
 			} else {
 				// we got a new suggested window size
 				$items = $loop;
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('Mobile loop pre stage detected! Forcing smaller window size of %d before entering loop detection mode', $items));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('Mobile loop pre stage detected! Forcing smaller window size of %d before entering loop detection mode', $items));
 			}
 		}
 
 		if ($items >= 0 && $items <= 2) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf('Mobile loop detected! Messages sent to the mobile will be restricted to %d items in order to identify the conflict', $items));
+			SLog::Write(LOGLEVEL_WARN, sprintf('Mobile loop detected! Messages sent to the mobile will be restricted to %d items in order to identify the conflict', $items));
 		}
 
 		return $items;
@@ -532,34 +532,34 @@ class DeviceManager extends InterProcessData {
 		}
 
 		if (is_array($specialSyncFilter)) {
-			$store = ZPush::GetAdditionalSyncFolderStore($backendFolderId);
+			$store = GSync::GetAdditionalSyncFolderStore($backendFolderId);
 			// the store is only available when this is a shared folder (but might also be statically configured)
 			if ($store) {
 				$origin = Utils::GetFolderOriginFromId($folderid);
 				// do not limit when the owner or impersonated user is syncing!
 				if ($origin == DeviceManager::FLD_ORIGIN_USER || $origin == DeviceManager::FLD_ORIGIN_IMPERSONATED) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'Not checking for specific sync limit as this is the owner/impersonated user.');
+					SLog::Write(LOGLEVEL_DEBUG, 'Not checking for specific sync limit as this is the owner/impersonated user.');
 				} else {
 					$spKey = false;
 					$spFilter = false;
 					// 1. step: check if there is a general limitation for the store
 					if (array_key_exists($store, $specialSyncFilter)) {
 						$spFilter = $specialSyncFilter[$store];
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the store: '%s': %s", $store, $spFilter));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the store: '%s': %s", $store, $spFilter));
 					}
 
 					// 2. step: check if there is a limitation for the hashed ID (for shared/configured stores)
 					$spKey = $store . '/' . $folderid;
 					if (array_key_exists($spKey, $specialSyncFilter)) {
 						$spFilter = $specialSyncFilter[$spKey];
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the folder: '%s': %s", $spKey, $spFilter));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the folder: '%s': %s", $spKey, $spFilter));
 					}
 
 					// 3. step: check if there is a limitation for the backendId
 					$spKey = $store . '/' . $backendFolderId;
 					if (array_key_exists($spKey, $specialSyncFilter)) {
 						$spFilter = $specialSyncFilter[$spKey];
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the folder: '%s': %s", $spKey, $spFilter));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("Limit sync due to configured limitation on the folder: '%s': %s", $spKey, $spFilter));
 					}
 					if ($spFilter) {
 						$maxAllowed = $spFilter;
@@ -580,7 +580,7 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function ForceFolderResync($folderid) {
-		ZLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->ForceFolderResync('%s'): folder resync", $folderid));
+		SLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->ForceFolderResync('%s'): folder resync", $folderid));
 
 		// delete folder states
 		StateManager::UnLinkState($this->device, $folderid);
@@ -595,7 +595,7 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function ForceFullResync() {
-		ZLog::Write(LOGLEVEL_INFO, 'Full device resync requested');
+		SLog::Write(LOGLEVEL_INFO, 'Full device resync requested');
 
 		// delete all other uuids
 		foreach ($this->device->GetAllFolderIds() as $folderid) {
@@ -646,7 +646,7 @@ class DeviceManager extends InterProcessData {
 	public function IsHierarchyFullResyncRequired() {
 		// do not check for loop detection, if the foldersync is not yet complete
 		if ($this->GetFolderSyncComplete() === false) {
-			ZLog::Write(LOGLEVEL_INFO, 'DeviceManager->IsHierarchyFullResyncRequired(): aborted, as exporting of folders has not yet completed');
+			SLog::Write(LOGLEVEL_INFO, 'DeviceManager->IsHierarchyFullResyncRequired(): aborted, as exporting of folders has not yet completed');
 
 			return false;
 		}
@@ -685,9 +685,9 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function AnnounceProcessAsPush() {
-		ZLog::Write(LOGLEVEL_DEBUG, 'Announce process as PUSH connection');
+		SLog::Write(LOGLEVEL_DEBUG, 'Announce process as PUSH connection');
 
-		return $this->loopdetection->ProcessLoopDetectionSetAsPush() && ZPush::GetTopCollector()->SetAsPushConnection();
+		return $this->loopdetection->ProcessLoopDetectionSetAsPush() && GSync::GetTopCollector()->SetAsPushConnection();
 	}
 
 	/**
@@ -727,7 +727,7 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function CheckFolderData() {
-		ZLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->CheckFolderData() checking integrity of hierarchy cache with synchronized folders');
+		SLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->CheckFolderData() checking integrity of hierarchy cache with synchronized folders');
 
 		$hc = $this->device->GetHierarchyCache();
 		$notInCache = [];
@@ -736,7 +736,7 @@ class DeviceManager extends InterProcessData {
 			if ($uuid) {
 				// has a UUID but is not in the cache?! This is deleted, remove the states.
 				if (!$hc->GetFolder($folderid)) {
-					ZLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->CheckFolderData(): Folder '%s' has sync states but is not in the hierarchy cache. Removing states.", $folderid));
+					SLog::Write(LOGLEVEL_WARN, sprintf("DeviceManager->CheckFolderData(): Folder '%s' has sync states but is not in the hierarchy cache. Removing states.", $folderid));
 					StateManager::UnLinkState($this->device, $folderid);
 				}
 			}
@@ -762,12 +762,12 @@ class DeviceManager extends InterProcessData {
 			if ((!$currentStatus || (isset($currentStatus->{ASDevice::FOLDERSYNCSTATUS}) && $statusflag !== $currentStatus->{ASDevice::FOLDERSYNCSTATUS}))
 					&& $statusflag != self::FLD_SYNC_COMPLETED) {
 				$this->device->SetFolderSyncStatus($folderid, $statusflag);
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('SetFolderSyncStatus(): set %s for %s', $statusflag, $folderid));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('SetFolderSyncStatus(): set %s for %s', $statusflag, $folderid));
 			}
 			// if completed, remove the status
 			elseif ($statusflag == self::FLD_SYNC_COMPLETED) {
 				$this->device->SetFolderSyncStatus($folderid, false);
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('SetFolderSyncStatus(): completed for %s', $folderid));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('SetFolderSyncStatus(): completed for %s', $folderid));
 			}
 		}
 
@@ -787,7 +787,7 @@ class DeviceManager extends InterProcessData {
 		// status available ?
 		$hasStatus = isset($currentStatus->{ASDevice::FOLDERSYNCSTATUS});
 		if ($hasStatus) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('HasFolderSyncStatus(): saved folder status for %s: %s', $folderid, $currentStatus->{ASDevice::FOLDERSYNCSTATUS}));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('HasFolderSyncStatus(): saved folder status for %s: %s', $folderid, $currentStatus->{ASDevice::FOLDERSYNCSTATUS}));
 		}
 
 		return $hasStatus;
@@ -829,7 +829,7 @@ class DeviceManager extends InterProcessData {
 		if ($user == false || $devid == false) {
 			return false;
 		}
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->ClearLoopDetectionData(): clearing data for user '%s' and device '%s'", $user, $devid));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->ClearLoopDetectionData(): clearing data for user '%s' and device '%s'", $user, $devid));
 
 		return $this->loopdetection->ClearData($user, $devid);
 	}
@@ -840,7 +840,7 @@ class DeviceManager extends InterProcessData {
 	 * @return bool
 	 */
 	public function AnnounceASVersion() {
-		$latest = ZPush::GetSupportedASVersion();
+		$latest = GSync::GetSupportedASVersion();
 		$announced = $this->device->GetAnnouncedASversion();
 		$this->device->SetAnnouncedASversion($latest);
 
@@ -868,11 +868,11 @@ class DeviceManager extends InterProcessData {
 	public function GetBackendIdForFolderId($folderid) {
 		$backendId = $this->device->GetFolderBackendId($folderid);
 		if (!$backendId) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->GetBackendIdForFolderId(): no backend-folderid available for '%s', returning as is.", $folderid));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("DeviceManager->GetBackendIdForFolderId(): no backend-folderid available for '%s', returning as is.", $folderid));
 
 			return $folderid;
 		}
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('DeviceManager->GetBackendIdForFolderId(): folderid %s => %s', $folderid, $backendId));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('DeviceManager->GetBackendIdForFolderId(): folderid %s => %s', $folderid, $backendId));
 
 		return $backendId;
 	}
@@ -894,7 +894,7 @@ class DeviceManager extends InterProcessData {
 	 */
 	public function GetFolderIdForBackendId($backendid, $generateNewIdIfNew = false, $folderOrigin = self::FLD_ORIGIN_USER, $folderName = null) {
 		if (!in_array($folderOrigin, [DeviceManager::FLD_ORIGIN_CONFIG, DeviceManager::FLD_ORIGIN_GAB, DeviceManager::FLD_ORIGIN_SHARED, DeviceManager::FLD_ORIGIN_USER, DeviceManager::FLD_ORIGIN_IMPERSONATED])) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("ASDevice->GetFolderIdForBackendId(): folder type '%s' is unknown in DeviceManager", $folderOrigin));
+			SLog::Write(LOGLEVEL_WARN, sprintf("ASDevice->GetFolderIdForBackendId(): folder type '%s' is unknown in DeviceManager", $folderOrigin));
 		}
 
 		return $this->device->GetFolderIdForBackendId($backendid, $generateNewIdIfNew, $folderOrigin, $folderName);
@@ -918,20 +918,20 @@ class DeviceManager extends InterProcessData {
 			$deviceHash = $this->statemachine->GetStateHash(self::$devid, IStateMachine::DEVICEDATA);
 			if ($deviceHash != $this->deviceHash) {
 				if ($this->deviceHash) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->loadDeviceData(): Device data was changed, reloading');
+					SLog::Write(LOGLEVEL_DEBUG, 'DeviceManager->loadDeviceData(): Device data was changed, reloading');
 				}
 				$device = $this->statemachine->GetState(self::$devid, IStateMachine::DEVICEDATA);
 				// TODO: case should be removed when removing ASDevice backwards compatibility
 				// fallback for old grosync like devicedata
 				if (($device instanceof StateObject) && isset($device->devices) && is_array($device->devices)) {
-					ZLog::Write(LOGLEVEL_INFO, 'Found old style device, converting...');
+					SLog::Write(LOGLEVEL_INFO, 'Found old style device, converting...');
 					list($_deviceuser, $_domain) = Utils::SplitDomainUser(Request::GetGETUser());
 					if (!isset($device->data->devices[$_deviceuser])) {
-						ZLog::Write(LOGLEVEL_INFO, 'Using old style device for this request and updating when concluding');
+						SLog::Write(LOGLEVEL_INFO, 'Using old style device for this request and updating when concluding');
 						$device = $device->devices[$_deviceuser];
 						$device->lastupdatetime = time();
 					} else {
-						ZLog::Write(LOGLEVEL_WARN, sprintf("Could not find '%s' in device state. Dropping previous device state!", $_deviceuser));
+						SLog::Write(LOGLEVEL_WARN, sprintf("Could not find '%s' in device state. Dropping previous device state!", $_deviceuser));
 					}
 				}
 				if (method_exists($device, 'LoadedDevice')) {
@@ -939,7 +939,7 @@ class DeviceManager extends InterProcessData {
 					$this->device->LoadedDevice();
 					$this->deviceHash = $deviceHash;
 				} else {
-					ZLog::Write(LOGLEVEL_WARN, 'Loaded device is not a device object. Dropping new loaded state and keeping initialized object!');
+					SLog::Write(LOGLEVEL_WARN, 'Loaded device is not a device object. Dropping new loaded state and keeping initialized object!');
 				}
 				$this->stateManager->SetDevice($this->device);
 			}
@@ -996,11 +996,11 @@ class DeviceManager extends InterProcessData {
 			$info .= sprintf(" - On: '%s'", strftime('%Y-%m-%d %H:%M', $message->starttime));
 		}
 		$brokenMessage->info = $info;
-		$brokenMessage->reasonString = ZLog::GetLastMessage(LOGLEVEL_WARN);
+		$brokenMessage->reasonString = SLog::GetLastMessage(LOGLEVEL_WARN);
 
 		$this->device->AddIgnoredMessage($brokenMessage);
 
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("Ignored broken message (%s). Reason: '%s' Folderid: '%s' message id '%s'", $class, $reason, $folderid, $id));
+		SLog::Write(LOGLEVEL_ERROR, sprintf("Ignored broken message (%s). Reason: '%s' Folderid: '%s' message id '%s'", $class, $reason, $folderid, $id));
 
 		return true;
 	}
@@ -1016,7 +1016,7 @@ class DeviceManager extends InterProcessData {
 	 */
 	private function announceAcceptedMessage($folderid, $id) {
 		if ($this->device->RemoveIgnoredMessage($folderid, $id)) {
-			ZLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->announceAcceptedMessage('%s', '%s'): cleared previously ignored message as message is successfully streamed", $folderid, $id));
+			SLog::Write(LOGLEVEL_INFO, sprintf("DeviceManager->announceAcceptedMessage('%s', '%s'): cleared previously ignored message as message is successfully streamed", $folderid, $id));
 
 			return true;
 		}

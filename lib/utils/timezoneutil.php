@@ -1061,7 +1061,7 @@ class TimezoneUtil {
 			$phptimezone = date_default_timezone_get();
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, 'TimezoneUtil::GetFullTZ() for ' . $phptimezone);
+		SLog::Write(LOGLEVEL_DEBUG, 'TimezoneUtil::GetFullTZ() for ' . $phptimezone);
 
 		$servertzname = self::guessTZNameFromPHPName($phptimezone);
 
@@ -1077,7 +1077,7 @@ class TimezoneUtil {
 	 */
 	public static function GetFullTZFromTZName($tzname) {
 		if (!array_key_exists($tzname, self::$tzonesoffsets)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetFullTZFromTZName('%s'): Is a PHP TimeZone, converting", $tzname));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetFullTZFromTZName('%s'): Is a PHP TimeZone, converting", $tzname));
 			$tzname = self::guessTZNameFromPHPName($tzname);
 		}
 
@@ -1117,9 +1117,9 @@ class TimezoneUtil {
 	 * @return array
 	 */
 	public static function FillTZNames($tz) {
-		ZLog::Write(LOGLEVEL_DEBUG, 'TimezoneUtil::FillTZNames() filling up bias ' . $tz['bias']);
+		SLog::Write(LOGLEVEL_DEBUG, 'TimezoneUtil::FillTZNames() filling up bias ' . $tz['bias']);
 		if (!isset($tz['bias'])) {
-			ZLog::Write(LOGLEVEL_WARN, 'TimezoneUtil::FillTZNames() submitted TZ array does not have a bias');
+			SLog::Write(LOGLEVEL_WARN, 'TimezoneUtil::FillTZNames() submitted TZ array does not have a bias');
 		} else {
 			$tzname = self::guessTZNameFromOffset($tz);
 			$tz['tzname'] = $tz['tznamedst'] = self::encodeTZName(self::getMSTZnameFromTZName($tzname));
@@ -1155,7 +1155,7 @@ class TimezoneUtil {
 		}
 
 		// nothing found? return gmt
-		ZLog::Write(LOGLEVEL_WARN, "TimezoneUtil::guessTZNameFromOffset() no timezone found for the data submitted. Returning 'GMT Standard Time'.");
+		SLog::Write(LOGLEVEL_WARN, "TimezoneUtil::guessTZNameFromOffset() no timezone found for the data submitted. Returning 'GMT Standard Time'.");
 
 		return 'GMT Standard Time';
 	}
@@ -1177,7 +1177,7 @@ class TimezoneUtil {
 				break;
 			}
 		}
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("TimezoneUtil::guessTZNameFromPHPName() no compatible timezone found for '%s'. Returning 'GMT Standard Time'. Please contact the grommunio dev team.", $phpname));
+		SLog::Write(LOGLEVEL_ERROR, sprintf("TimezoneUtil::guessTZNameFromPHPName() no compatible timezone found for '%s'. Returning 'GMT Standard Time'. Please contact the grommunio dev team.", $phpname));
 
 		return self::$mstzones['085'][0];
 	}
@@ -1193,7 +1193,7 @@ class TimezoneUtil {
 		// if $name is empty, get the timezone from system
 		if (trim($name) == '') {
 			$name = date_default_timezone_get();
-			ZLog::Write(LOGLEVEL_INFO, sprintf("TimezoneUtil::getMSTZnameFromTZName(): empty timezone name sent. Got timezone from the system: '%s'", $name));
+			SLog::Write(LOGLEVEL_INFO, sprintf("TimezoneUtil::getMSTZnameFromTZName(): empty timezone name sent. Got timezone from the system: '%s'", $name));
 		}
 
 		foreach (self::$mstzones as $mskey => $msdefs) {
@@ -1224,7 +1224,7 @@ class TimezoneUtil {
 			}
 		}
 
-		ZLog::Write(LOGLEVEL_WARN, sprintf("TimezoneUtil::getMSTZnameFromTZName() no MS name found for '%s'. Returning '(GMT) Greenwich Mean Time: Dublin, Edinburgh, Lisbon, London'", $name));
+		SLog::Write(LOGLEVEL_WARN, sprintf("TimezoneUtil::getMSTZnameFromTZName() no MS name found for '%s'. Returning '(GMT) Greenwich Mean Time: Dublin, Edinburgh, Lisbon, London'", $name));
 
 		return self::$mstzones['085'][1];
 	}
@@ -1373,12 +1373,12 @@ class TimezoneUtil {
 	 */
 	public static function GetPhpSupportedTimezone($timezone) {
 		if (in_array($timezone, DateTimeZone::listIdentifiers())) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetPhpSupportedTimezone(): '%s' is a PHP supported timezone", $timezone));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetPhpSupportedTimezone(): '%s' is a PHP supported timezone", $timezone));
 
 			return $timezone;
 		}
 		$dtz = date_default_timezone_get();
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetPhpSupportedTimezone(): '%s' is not a PHP supported timezone. Returning default timezone: '%s'", $timezone, $dtz));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("TimezoneUtil::GetPhpSupportedTimezone(): '%s' is not a PHP supported timezone. Returning default timezone: '%s'", $timezone, $dtz));
 
 		return $dtz;
 	}

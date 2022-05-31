@@ -214,7 +214,7 @@ class Request {
 		self::$headers = array_change_key_case(apache_request_headers(), CASE_LOWER);
 		self::$useragent = (isset(self::$headers['user-agent'])) ? self::$headers['user-agent'] : self::UNKNOWN;
 		if (!isset(self::$asProtocolVersion)) {
-			self::$asProtocolVersion = (isset(self::$headers['ms-asprotocolversion'])) ? self::filterEvilInput(self::$headers['ms-asprotocolversion'], self::NUMBERSDOT_ONLY) : ZPush::GetLatestSupportedASVersion();
+			self::$asProtocolVersion = (isset(self::$headers['ms-asprotocolversion'])) ? self::filterEvilInput(self::$headers['ms-asprotocolversion'], self::NUMBERSDOT_ONLY) : GSync::GetLatestSupportedASVersion();
 		}
 
 		// if policykey is not yet set, try to set it from the header
@@ -228,7 +228,7 @@ class Request {
 		}
 
 		if (isset(self::$base64QueryDecoded)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("Request::ProcessHeaders(): base64 query string: '%s' (decoded: '%s')", $_SERVER['QUERY_STRING'], http_build_query(self::$base64QueryDecoded, '', ',')));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("Request::ProcessHeaders(): base64 query string: '%s' (decoded: '%s')", $_SERVER['QUERY_STRING'], http_build_query(self::$base64QueryDecoded, '', ',')));
 			if (isset(self::$policykey)) {
 				self::$headers['x-ms-policykey'] = self::$policykey;
 			}
@@ -242,7 +242,7 @@ class Request {
 			self::$acceptMultipart = true;
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('Request::ProcessHeaders() ASVersion: %s', self::$asProtocolVersion));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('Request::ProcessHeaders() ASVersion: %s', self::$asProtocolVersion));
 
 		if (defined('USE_CUSTOM_REMOTE_IP_HEADER') && USE_CUSTOM_REMOTE_IP_HEADER !== false) {
 			// make custom header compatible with Apache modphp (see ZP-1332)
@@ -260,7 +260,7 @@ class Request {
 				}
 				$remoteIP = self::filterIP($remoteIP);
 				if ($remoteIP) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("Using custom header '%s' to determine remote IP: %s - connect is coming from IP: %s", USE_CUSTOM_REMOTE_IP_HEADER, $remoteIP, self::$remoteAddr));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("Using custom header '%s' to determine remote IP: %s - connect is coming from IP: %s", USE_CUSTOM_REMOTE_IP_HEADER, $remoteIP, self::$remoteAddr));
 					self::$remoteAddr = $remoteIP;
 				}
 			}

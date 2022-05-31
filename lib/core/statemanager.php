@@ -37,9 +37,9 @@ class StateManager {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->statemachine = ZPush::GetStateMachine();
-		$this->hierarchyOperation = ZPush::HierarchyCommand(Request::GetCommandCode());
-		$this->deleteOldStates = (Request::GetCommandCode() === ZPush::COMMAND_SYNC || $this->hierarchyOperation);
+		$this->statemachine = GSync::GetStateMachine();
+		$this->hierarchyOperation = GSync::HierarchyCommand(Request::GetCommandCode());
+		$this->deleteOldStates = (Request::GetCommandCode() === GSync::COMMAND_SYNC || $this->hierarchyOperation);
 		$this->synchedFolders = [];
 	}
 
@@ -349,7 +349,7 @@ class StateManager {
 			// remove states but no need to notify device
 			self::UnLinkState($device, $folderid, false);
 
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager::linkState(#ASDevice, '%s','%s'): linked to uuid '%s'.", $newUuid, (($folderid === false) ? 'HierarchyCache' : $folderid), $newUuid));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager::linkState(#ASDevice, '%s','%s'): linked to uuid '%s'.", $newUuid, (($folderid === false) ? 'HierarchyCache' : $folderid), $newUuid));
 
 			return $device->SetFolderUUID($newUuid, $folderid);
 		}
@@ -379,17 +379,17 @@ class StateManager {
 		}
 
 		if ($savedUuid) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager::UnLinkState('%s'): saved state '%s' will be deleted.", $folderid, $savedUuid));
-			ZPush::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::DEFTYPE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
-			ZPush::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::FOLDERDATA, $savedUuid, false, true); // CPO
-			ZPush::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::FAILSAVE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
-			ZPush::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::BACKENDSTORAGE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager::UnLinkState('%s'): saved state '%s' will be deleted.", $folderid, $savedUuid));
+			GSync::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::DEFTYPE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
+			GSync::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::FOLDERDATA, $savedUuid, false, true); // CPO
+			GSync::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::FAILSAVE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
+			GSync::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::BACKENDSTORAGE, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
 
 			// remove all messages which could not be synched before
 			$device->RemoveIgnoredMessage($folderid, false);
 
 			if ($folderid === false && $savedUuid !== false) {
-				ZPush::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::HIERARCHY, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
+				GSync::GetStateMachine()->CleanStates($device->GetDeviceId(), IStateMachine::HIERARCHY, $savedUuid, self::FIXEDHIERARCHYCOUNTER * 2);
 			}
 		}
 		// delete this id from the uuid cache
@@ -455,7 +455,7 @@ class StateManager {
 			return false;
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager->loadHierarchyCache(): '%s-%s-%s-%d'", $this->device->GetDeviceId(), $this->uuid, IStateMachine::HIERARCHY, $this->oldStateCounter));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("StateManager->loadHierarchyCache(): '%s-%s-%s-%d'", $this->device->GetDeviceId(), $this->uuid, IStateMachine::HIERARCHY, $this->oldStateCounter));
 
 		// check if a full hierarchy sync might be necessary
 		if ($this->device->GetFolderUUID(false) === false) {

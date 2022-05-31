@@ -47,7 +47,7 @@ class SyncCollections implements Iterator {
 	 * @return bool
 	 */
 	public static function InvalidatePingableFlags() {
-		ZLog::Write(LOGLEVEL_DEBUG, 'SyncCollections::InvalidatePingableFlags(): Invalidating now');
+		SLog::Write(LOGLEVEL_DEBUG, 'SyncCollections::InvalidatePingableFlags(): Invalidating now');
 
 		try {
 			$sc = new SyncCollections();
@@ -60,7 +60,7 @@ class SyncCollections implements Iterator {
 			}
 
 			return true;
-		} catch (ZPushException $e) {
+		} catch (GSyncException $e) {
 		}
 
 		return false;
@@ -160,7 +160,7 @@ class SyncCollections implements Iterator {
 			}
 
 			if ($spa->GetUuidCounter() == 0) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->LoadCollection(): Found collection with move state only, ignoring.');
+				SLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->LoadCollection(): Found collection with move state only, ignoring.');
 
 				return true;
 			}
@@ -179,7 +179,7 @@ class SyncCollections implements Iterator {
 		}
 
 		// if this is an additional folder the backend has to be setup correctly
-		if ($checkPermissions === true && !ZPush::GetBackend()->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
+		if ($checkPermissions === true && !GSync::GetBackend()->Setup(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
 			throw new StatusException(sprintf('SyncCollections->LoadCollection(): could not Setup() the backend for folder id %s/%s', $spa->GetFolderId(), $spa->GetBackendFolderId()), self::ERROR_WRONG_HIERARCHY);
 		}
 
@@ -220,7 +220,7 @@ class SyncCollections implements Iterator {
 
 		if ($spa->IsDataChanged()) {
 			$this->loadStateManager();
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->SaveCollection(): Data of folder '%s' changed", $spa->GetFolderId()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->SaveCollection(): Data of folder '%s' changed", $spa->GetFolderId()));
 
 			// save new windowsize
 			if (isset($this->globalWindowSize)) {
@@ -252,7 +252,7 @@ class SyncCollections implements Iterator {
 
 		$this->collections[$spa->GetFolderId()] = $spa;
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->AddCollection(): Folder id '%s' : ref. Lifetime '%s', last sync at '%s'", $spa->GetFolderId(), $spa->GetReferenceLifetime(), $spa->GetLastSyncTime()));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->AddCollection(): Folder id '%s' : ref. Lifetime '%s', last sync at '%s'", $spa->GetFolderId(), $spa->GetReferenceLifetime(), $spa->GetLastSyncTime()));
 		if ($spa->HasLastSyncTime() && $spa->GetLastSyncTime() > $this->lastSyncTime) {
 			$this->lastSyncTime = $spa->GetLastSyncTime();
 
@@ -266,7 +266,7 @@ class SyncCollections implements Iterator {
 				$this->refLifetime = $spa->GetReferenceLifetime();
 			}
 
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->AddCollection(): Updated reference PolicyKey '%s', reference Lifetime '%s', Last sync at '%s'", $this->refPolicyKey, $this->refLifetime, $this->lastSyncTime));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->AddCollection(): Updated reference PolicyKey '%s', reference Lifetime '%s', Last sync at '%s'", $this->refPolicyKey, $this->refLifetime, $this->lastSyncTime));
 		}
 
 		return true;
@@ -390,7 +390,7 @@ class SyncCollections implements Iterator {
 
 		if (defined('SYNC_MAX_ITEMS') && $globalWindowSize > SYNC_MAX_ITEMS) {
 			if (!$this->loggedGlobalWindowSizeOverwrite) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->GetGlobalWindowSize() overwriting requested global window size of %d by %d forced in configuration.', $globalWindowSize, SYNC_MAX_ITEMS));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->GetGlobalWindowSize() overwriting requested global window size of %d by %d forced in configuration.', $globalWindowSize, SYNC_MAX_ITEMS));
 				$this->loggedGlobalWindowSizeOverwrite = true;
 			}
 			$globalWindowSize = SYNC_MAX_ITEMS;
@@ -488,12 +488,12 @@ class SyncCollections implements Iterator {
 		$pingTracking = new PingTracking();
 		$this->changes = [];
 
-		ZPush::GetDeviceManager()->AnnounceProcessAsPush();
-		ZPush::GetTopCollector()->AnnounceInformation(sprintf('lifetime %ds', $lifetime), true);
-		ZLog::Write(LOGLEVEL_INFO, sprintf('SyncCollections->CheckForChanges(): Waiting for %s changes... (lifetime %d seconds)', (empty($classes)) ? 'policy' : 'store', $lifetime));
+		GSync::GetDeviceManager()->AnnounceProcessAsPush();
+		GSync::GetTopCollector()->AnnounceInformation(sprintf('lifetime %ds', $lifetime), true);
+		SLog::Write(LOGLEVEL_INFO, sprintf('SyncCollections->CheckForChanges(): Waiting for %s changes... (lifetime %d seconds)', (empty($classes)) ? 'policy' : 'store', $lifetime));
 
 		// use changes sink where available
-		$changesSink = ZPush::GetBackend()->HasChangesSink();
+		$changesSink = GSync::GetBackend()->HasChangesSink();
 
 		// create changessink and check folder stats if there are folders to Ping
 		if (!empty($classes)) {
@@ -506,26 +506,26 @@ class SyncCollections implements Iterator {
 				$backendFolderId = $spa->GetBackendFolderId();
 
 				// get the user store if this is a additional folder
-				$store = ZPush::GetAdditionalSyncFolderStore($backendFolderId);
+				$store = GSync::GetAdditionalSyncFolderStore($backendFolderId);
 
 				// initialize sink if no immediate changes were found so far
 				if ($changesSink && empty($this->changes)) {
-					ZPush::GetBackend()->Setup($store);
-					if (!ZPush::GetBackend()->ChangesSinkInitialize($backendFolderId)) {
+					GSync::GetBackend()->Setup($store);
+					if (!GSync::GetBackend()->ChangesSinkInitialize($backendFolderId)) {
 						throw new StatusException(sprintf('Error initializing ChangesSink for folder id %s/%s', $folderid, $backendFolderId), self::ERROR_WRONG_HIERARCHY);
 					}
 				}
 
 				// check if the folder stat changed since the last sync, if so generate a change for it (only on first run)
-				$currentFolderStat = ZPush::GetBackend()->GetFolderStat($store, $backendFolderId);
-				if ($this->waitingTime == 0 && ZPush::GetBackend()->HasFolderStats() && $currentFolderStat !== false && $spa->IsExporterRunRequired($currentFolderStat, true)) {
+				$currentFolderStat = GSync::GetBackend()->GetFolderStat($store, $backendFolderId);
+				if ($this->waitingTime == 0 && GSync::GetBackend()->HasFolderStats() && $currentFolderStat !== false && $spa->IsExporterRunRequired($currentFolderStat, true)) {
 					$this->changes[$spa->GetFolderId()] = 1;
 				}
 			}
 		}
 
 		if (!empty($this->changes)) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->CheckForChanges(): Using ChangesSink but found changes verifying the folder stats');
+			SLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->CheckForChanges(): Using ChangesSink but found changes verifying the folder stats');
 
 			return true;
 		}
@@ -537,7 +537,7 @@ class SyncCollections implements Iterator {
 		// always use policy key from the request if it was sent
 		$policyKey = $this->GetReferencePolicyKey();
 		if (Request::WasPolicyKeySent() && Request::GetPolicyKey() != 0) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("refpolkey:'%s', sent polkey:'%s'", $policyKey, Request::GetPolicyKey()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("refpolkey:'%s', sent polkey:'%s'", $policyKey, Request::GetPolicyKey()));
 			$policyKey = Request::GetPolicyKey();
 		}
 		while (($now = time()) < $endat) {
@@ -552,7 +552,7 @@ class SyncCollections implements Iterator {
 
 			// Check if provisioning is necessary
 			// if a PolicyKey was sent use it. If not, compare with the ReferencePolicyKey
-			if (PROVISIONING === true && $policyKey !== false && ZPush::GetProvisioningManager()->ProvisioningRequired($policyKey, true, false)) {
+			if (PROVISIONING === true && $policyKey !== false && GSync::GetProvisioningManager()->ProvisioningRequired($policyKey, true, false)) {
 				// the hierarchysync forces provisioning
 				throw new StatusException('SyncCollections->CheckForChanges(): Policies or PolicyKey changed. Provisioning required.', self::ERROR_WRONG_HIERARCHY);
 			}
@@ -570,7 +570,7 @@ class SyncCollections implements Iterator {
 
 				// more than 60 secs to go?
 				if (($now + 60) < $endat) {
-					ZPush::GetTopCollector()->AnnounceInformation(sprintf('Forced timeout after %ds', ($now - $started)), true);
+					GSync::GetTopCollector()->AnnounceInformation(sprintf('Forced timeout after %ds', ($now - $started)), true);
 
 					throw new StatusException(sprintf('SyncCollections->CheckForChanges(): Timeout forced after %ss from %ss due to other process', ($now - $started), $lifetime), self::OBSOLETE_CONNECTION);
 				}
@@ -578,8 +578,8 @@ class SyncCollections implements Iterator {
 
 			// Use changes sink if available
 			if ($changesSink) {
-				ZPush::GetTopCollector()->AnnounceInformation(sprintf('Sink %d/%ds on %s', ($now - $started), $lifetime, $checkClasses));
-				$notifications = ZPush::GetBackend()->ChangesSink($nextInterval);
+				GSync::GetTopCollector()->AnnounceInformation(sprintf('Sink %d/%ds on %s', ($now - $started), $lifetime, $checkClasses));
+				$notifications = GSync::GetBackend()->ChangesSink($nextInterval);
 
 				// how long are we waiting for changes
 				$this->waitingTime = time() - $started;
@@ -596,15 +596,15 @@ class SyncCollections implements Iterator {
 						}
 					} else {
 						// the backend will notify on the backend folderid
-						$folderid = ZPush::GetDeviceManager()->GetFolderIdForBackendId($backendFolderId);
+						$folderid = GSync::GetDeviceManager()->GetFolderIdForBackendId($backendFolderId);
 
 						// check if the notification on the folder is within our filter
 						if ($this->CountChange($folderid)) {
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s'", $folderid));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s'", $folderid));
 							$validNotifications = true;
 							$this->waitingTime = time() - $started;
 						} else {
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s', but it is not relevant", $folderid));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CheckForChanges(): Notification received on folder '%s', but it is not relevant", $folderid));
 						}
 					}
 				}
@@ -614,9 +614,9 @@ class SyncCollections implements Iterator {
 			}
 			// use polling mechanism
 			else {
-				ZPush::GetTopCollector()->AnnounceInformation(sprintf('Polling %d/%ds on %s', ($now - $started), $lifetime, $checkClasses));
+				GSync::GetTopCollector()->AnnounceInformation(sprintf('Polling %d/%ds on %s', ($now - $started), $lifetime, $checkClasses));
 				if ($this->CountChanges($onlyPingable)) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->CheckForChanges(): Found changes polling'));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->CheckForChanges(): Found changes polling'));
 
 					return true;
 				}
@@ -624,7 +624,7 @@ class SyncCollections implements Iterator {
 				sleep($nextInterval);
 			} // end polling
 		} // end wait for changes
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->CheckForChanges(): no changes found after %ds', time() - $started));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->CheckForChanges(): no changes found after %ds', time() - $started));
 
 		return false;
 	}
@@ -667,18 +667,18 @@ class SyncCollections implements Iterator {
 		$spa = $this->GetCollection($folderid);
 
 		if (!$spa) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CountChange(): Could not get SyncParameters object from cache for folderid '%s' to verify notification. Ignoring.", $folderid));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->CountChange(): Could not get SyncParameters object from cache for folderid '%s' to verify notification. Ignoring.", $folderid));
 
 			return false;
 		}
 
-		$backendFolderId = ZPush::GetDeviceManager()->GetBackendIdForFolderId($folderid);
+		$backendFolderId = GSync::GetDeviceManager()->GetBackendIdForFolderId($folderid);
 		// switch user store if this is a additional folder (additional true -> do not debug)
-		ZPush::GetBackend()->Setup(ZPush::GetAdditionalSyncFolderStore($backendFolderId, true));
+		GSync::GetBackend()->Setup(GSync::GetAdditionalSyncFolderStore($backendFolderId, true));
 		$changecount = false;
 
 		try {
-			$exporter = ZPush::GetBackend()->GetExporter($backendFolderId);
+			$exporter = GSync::GetBackend()->GetExporter($backendFolderId);
 			if ($exporter !== false && isset($this->addparms[$folderid]['state'])) {
 				$importer = false;
 				$exporter->Config($this->addparms[$folderid]['state'], BACKEND_DISCARD_DATA);
@@ -691,7 +691,7 @@ class SyncCollections implements Iterator {
 			}
 		} catch (StatusException $ste) {
 			if ($ste->getCode() == SYNC_STATUS_FOLDERHIERARCHYCHANGED) {
-				ZLog::Write(LOGLEVEL_WARN, 'SyncCollections->CountChange(): exporter can not be re-configured due to state error, emulating change in folder to force Sync.');
+				SLog::Write(LOGLEVEL_WARN, 'SyncCollections->CountChange(): exporter can not be re-configured due to state error, emulating change in folder to force Sync.');
 				$this->changes[$folderid] = 1;
 				// make sure this folder is fully synched on next Sync request
 				$this->invalidateFolderStat($spa);
@@ -704,7 +704,7 @@ class SyncCollections implements Iterator {
 
 		// start over if exporter can not be configured atm
 		if ($changecount === false) {
-			ZLog::Write(LOGLEVEL_WARN, 'SyncCollections->CountChange(): no changes received from Exporter.');
+			SLog::Write(LOGLEVEL_WARN, 'SyncCollections->CountChange(): no changes received from Exporter.');
 		}
 
 		$this->changes[$folderid] = $changecount;
@@ -725,8 +725,8 @@ class SyncCollections implements Iterator {
 
 		// Check with device manager if the hierarchy should be reloaded.
 		// New additional folders are loaded here.
-		if (ZPush::GetDeviceManager()->IsHierarchySyncRequired()) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->countHierarchyChange(): DeviceManager says HierarchySync is required.');
+		if (GSync::GetDeviceManager()->IsHierarchySyncRequired()) {
+			SLog::Write(LOGLEVEL_DEBUG, 'SyncCollections->countHierarchyChange(): DeviceManager says HierarchySync is required.');
 
 			return true;
 		}
@@ -739,13 +739,13 @@ class SyncCollections implements Iterator {
 					throw new StatusException('Invalid states found while re-loading hierarchy data.');
 				}
 
-				$changesMem = ZPush::GetDeviceManager()->GetHierarchyChangesWrapper();
+				$changesMem = GSync::GetDeviceManager()->GetHierarchyChangesWrapper();
 				// the hierarchyCache should now fully be initialized - check for changes in the additional folders
-				$changesMem->Config(ZPush::GetAdditionalSyncFolders(false));
+				$changesMem->Config(GSync::GetAdditionalSyncFolders(false));
 
 				// reset backend to the main store
-				ZPush::GetBackend()->Setup(false);
-				$exporter = ZPush::GetBackend()->GetExporter();
+				GSync::GetBackend()->Setup(false);
+				$exporter = GSync::GetBackend()->GetExporter();
 				if ($exporter !== false && isset($this->addparms[$folderid]['state'])) {
 					$exporter->Config($this->addparms[$folderid]['state']);
 					$ret = $exporter->InitializeExporter($changesMem);
@@ -763,7 +763,7 @@ class SyncCollections implements Iterator {
 
 			// start over if exporter can not be configured atm
 			if ($changecount === false) {
-				ZLog::Write(LOGLEVEL_WARN, 'SyncCollections->countHierarchyChange(): no changes received from Exporter.');
+				SLog::Write(LOGLEVEL_WARN, 'SyncCollections->countHierarchyChange(): no changes received from Exporter.');
 			}
 		}
 
@@ -801,7 +801,7 @@ class SyncCollections implements Iterator {
 	 * @return bool
 	 */
 	public function WaitedForChanges() {
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->WaitedForChanges: waited for %d seconds', $this->waitingTime));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('SyncCollections->WaitedForChanges: waited for %d seconds', $this->waitingTime));
 
 		return $this->waitingTime > 0;
 	}
@@ -889,7 +889,7 @@ class SyncCollections implements Iterator {
 	 */
 	private function loadStateManager() {
 		if (!isset($this->stateManager)) {
-			$this->stateManager = ZPush::GetDeviceManager()->GetStateManager();
+			$this->stateManager = GSync::GetDeviceManager()->GetStateManager();
 		}
 	}
 
@@ -902,7 +902,7 @@ class SyncCollections implements Iterator {
 	 */
 	private function invalidateFolderStat($spa) {
 		if ($spa->HasFolderStat()) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->invalidateFolderStat(): removing folder stat '%s' for folderid '%s'", $spa->GetFolderStat(), $spa->GetFolderId()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncCollections->invalidateFolderStat(): removing folder stat '%s' for folderid '%s'", $spa->GetFolderStat(), $spa->GetFolderId()));
 			$spa->DelFolderStat();
 			$this->SaveCollection($spa);
 

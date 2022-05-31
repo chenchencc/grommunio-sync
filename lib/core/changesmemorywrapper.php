@@ -49,10 +49,10 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 		// we should never forward this changes to a backend
 		if (!isset($this->destinationImporter)) {
 			foreach ($state as $addKey => $addFolder) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : process folder '%s'", $addFolder->displayname));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : process folder '%s'", $addFolder->displayname));
 				if (isset($addFolder->NoBackendFolder) && $addFolder->NoBackendFolder == true) {
 					// check rights for readonly access only
-					$hasRights = ZPush::GetBackend()->Setup($addFolder->Store, true, $addFolder->BackendId, true);
+					$hasRights = GSync::GetBackend()->Setup($addFolder->Store, true, $addFolder->BackendId, true);
 					// delete the folder on the device
 					if (!$hasRights) {
 						// delete the folder only if it was an additional folder before, else ignore it
@@ -68,7 +68,7 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 				$cacheFolder = $this->GetFolder($addFolder->serverid);
 				if (isset($cacheFolder->TypeReal)) {
 					$addFolder->TypeReal = $cacheFolder->TypeReal;
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(): Set REAL foldertype for folder '%s' from cache: '%s'", $addFolder->displayname, $addFolder->TypeReal));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(): Set REAL foldertype for folder '%s' from cache: '%s'", $addFolder->displayname, $addFolder->TypeReal));
 				}
 
 				// add folder to the device - if folder is already on the device, nothing will happen
@@ -83,7 +83,7 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 				if (isset($folder->NoBackendFolder)) {
 					// look if this folder is still in the list of additional folders and was not already deleted (e.g. missing permissions)
 					if (!array_key_exists($sid, $state) && !array_key_exists($sid, $alreadyDeleted)) {
-						ZLog::Write(LOGLEVEL_INFO, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : previously synchronized folder '%s' is not to be synched anymore. Sending delete to mobile.", $folder->displayname));
+						SLog::Write(LOGLEVEL_INFO, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : previously synchronized folder '%s' is not to be synched anymore. Sending delete to mobile.", $folder->displayname));
 						$this->ImportFolderDeletion($folder);
 					}
 				} else {
@@ -93,18 +93,18 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 
 			// check permissions on impersonated folders
 			if ($this->impersonating) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'ChangesMemoryWrapper->Config(): check permissions of folders of impersonated account');
-				$hierarchy = ZPush::GetBackend()->GetHierarchy();
+				SLog::Write(LOGLEVEL_DEBUG, 'ChangesMemoryWrapper->Config(): check permissions of folders of impersonated account');
+				$hierarchy = GSync::GetBackend()->GetHierarchy();
 				foreach ($hierarchy as $folder) {
 					// Check for at least read permissions of the impersonater on folders
-					$hasRights = ZPush::GetBackend()->Setup($this->impersonating, true, $folder->BackendId, true);
+					$hasRights = GSync::GetBackend()->Setup($this->impersonating, true, $folder->BackendId, true);
 
 					// the folder has no permissions
 					if (!$hasRights) {
 						$this->foldersWithoutPermissions[$folder->serverid] = $folder;
 						// if it's on the device, remove it
 						if (in_array($folder->serverid, $folderIdsOnClient)) {
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : previously synchronized folder '%s' has no permissions anymore. Sending delete to mobile.", $folder->displayname));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->Config(AdditionalFolders) : previously synchronized folder '%s' has no permissions anymore. Sending delete to mobile.", $folder->displayname));
 							// delete folder into memory so it's then sent to the client
 							$this->ImportFolderDeletion($folder);
 						}
@@ -231,10 +231,10 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 			if (!isset($folder->type) || !$folder->type) {
 				$cacheFolder = $this->GetFolder($folder->serverid);
 				$folder->type = $cacheFolder->type;
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Set foldertype for folder '%s' from cache as it was not sent: '%s'", $folder->displayname, $folder->type));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Set foldertype for folder '%s' from cache as it was not sent: '%s'", $folder->displayname, $folder->type));
 				if (isset($cacheFolder->TypeReal)) {
 					$folder->TypeReal = $cacheFolder->TypeReal;
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Set REAL foldertype for folder '%s' from cache: '%s'", $folder->displayname, $folder->TypeReal));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Set REAL foldertype for folder '%s' from cache: '%s'", $folder->displayname, $folder->TypeReal));
 				}
 			}
 
@@ -270,21 +270,21 @@ class ChangesMemoryWrapper extends HierarchyCache implements IImportChanges, IEx
 			// These changes are not relevant for the mobiles, as something changes but the relevant displayname and parentid
 			// stay the same. These changes will be dropped and are not sent!
 			if ($folder->equals($this->GetFolder($folder->serverid), false, true)) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as modification is not relevant.", $folder->displayname));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as modification is not relevant.", $folder->displayname));
 
 				return false;
 			}
 
 			// check if the parent ID is known on the device
 			if (!isset($folder->parentid) || ($folder->parentid != '0' && !$this->GetFolder($folder->parentid))) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as parent folder is not set or not known on mobile.", $folder->displayname));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as parent folder is not set or not known on mobile.", $folder->displayname));
 
 				return false;
 			}
 
 			// folder changes are only sent if the user has permissions on that folder, if not, change is ignored
 			if ($this->impersonating && array_key_exists($folder->serverid, $this->foldersWithoutPermissions)) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as impersonating user has no permissions on folder.", $folder->displayname));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("ChangesMemoryWrapper->ImportFolderChange(): Change for folder '%s' will not be sent as impersonating user has no permissions on folder.", $folder->displayname));
 
 				return false;
 			}

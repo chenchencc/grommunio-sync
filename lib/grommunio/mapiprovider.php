@@ -263,7 +263,7 @@ class MAPIProvider {
 					elseif (isset($row[PR_SEARCH_KEY])) {
 						$attendee->email = w2u($this->getEmailAddressFromSearchKey($row[PR_SEARCH_KEY]));
 					} else {
-						ZLog::Write(LOGLEVEL_WARN, sprintf("MAPIProvider->getAppointment: The attendee '%s' of type ZARAFA can not be resolved. Code: 0x%X", $row[PR_EMAIL_ADDRESS], mapi_last_hresult()));
+						SLog::Write(LOGLEVEL_WARN, sprintf("MAPIProvider->getAppointment: The attendee '%s' of type ZARAFA can not be resolved. Code: 0x%X", $row[PR_EMAIL_ADDRESS], mapi_last_hresult()));
 					}
 				}
 			}
@@ -293,7 +293,7 @@ class MAPIProvider {
 			}
 			// Work around iOS6 cancellation issue when there are no attendees for this meeting. Just add ourselves as the sole attendee.
 			if (count($message->attendees) == 0) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIProvider->getAppointment: adding ourself as an attendee for iOS6 workaround'));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIProvider->getAppointment: adding ourself as an attendee for iOS6 workaround'));
 				$attendee = new SyncAttendee();
 
 				$meinfo = nsp_getuserinfo(Request::GetUser());
@@ -318,7 +318,7 @@ class MAPIProvider {
 			if (is_array($meinfo)) {
 				$message->organizeremail = w2u($meinfo['primary_email']);
 				$message->organizername = w2u($meinfo['fullname']);
-				ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->getAppointment(): setting ourself as the organizer for an appointment without attendees.');
+				SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->getAppointment(): setting ourself as the organizer for an appointment without attendees.');
 			}
 		}
 
@@ -326,7 +326,7 @@ class MAPIProvider {
 			$message->nativebodytype = MAPIUtils::GetNativeBodyType($messageprops);
 		} elseif ($message->nativebodytype == SYNC_BODYPREFERENCE_UNDEFINED) {
 			$nbt = MAPIUtils::GetNativeBodyType($messageprops);
-			ZLog::Write(LOGLEVEL_INFO, sprintf('MAPIProvider->getAppointment(): native body type is undefined. Set it to %d.', $nbt));
+			SLog::Write(LOGLEVEL_INFO, sprintf('MAPIProvider->getAppointment(): native body type is undefined. Set it to %d.', $nbt));
 			$message->nativebodytype = $nbt;
 		}
 
@@ -348,7 +348,7 @@ class MAPIProvider {
 			// If it was created in another timezone and we have that information,
 			// set the startime to the midnight of the current timezone.
 			if ($appTz && ($localStartTime['tm_hour'] || $localStartTime['tm_min'])) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->getAppointment(): all-day event starting not midnight.');
+				SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->getAppointment(): all-day event starting not midnight.');
 				$duration = $message->endtime - $message->starttime;
 				$serverTz = TimezoneUtil::GetFullTZ();
 				$message->starttime = $this->getGMTTimeByTZ($this->getLocaltimeByTZ($message->starttime, $tz), $serverTz);
@@ -678,7 +678,7 @@ break;
 					$message->meetingrequest->recurrenceid = $this->getGMTTimeByTZ($basedate, $this->getGMTTZ());
 				} else {
 					if (!isset($props[$meetingrequestproperties['goidtag']]) || !isset($props[$meetingrequestproperties['recurStartTime']]) || !isset($props[$meetingrequestproperties['timezonetag']])) {
-						ZLog::Write(LOGLEVEL_WARN, 'Missing property to set correct basedate for exception');
+						SLog::Write(LOGLEVEL_WARN, 'Missing property to set correct basedate for exception');
 					} else {
 						$basedate = Utils::ExtractBaseDate($props[$meetingrequestproperties['goidtag']], $props[$meetingrequestproperties['recurStartTime']]);
 						$message->meetingrequest->recurrenceid = $this->getGMTTimeByTZ($basedate, $tz);
@@ -755,7 +755,7 @@ break;
 			// do it so that the attendee status is updated on the mobile
 			if (!isset($messageprops[$emailproperties['processed']])) {
 				// check if we are not sending the MR so we can process it - ZP-581
-				$cuser = ZPush::GetBackend()->GetUserDetails(ZPush::GetBackend()->GetCurrentUsername());
+				$cuser = GSync::GetBackend()->GetUserDetails(GSync::GetBackend()->GetCurrentUsername());
 				if (isset($cuser['emailaddress']) && $cuser['emailaddress'] != $fromaddr) {
 					if (!isset($req)) {
 						$req = new Meetingrequest($this->store, $mapimessage, $this->session);
@@ -975,7 +975,7 @@ break;
 			$message->nativebodytype = MAPIUtils::GetNativeBodyType($messageprops);
 		} elseif ($message->nativebodytype == SYNC_BODYPREFERENCE_UNDEFINED) {
 			$nbt = MAPIUtils::GetNativeBodyType($messageprops);
-			ZLog::Write(LOGLEVEL_INFO, sprintf('MAPIProvider->getEmail(): native body type is undefined. Set it to %d.', $nbt));
+			SLog::Write(LOGLEVEL_INFO, sprintf('MAPIProvider->getEmail(): native body type is undefined. Set it to %d.', $nbt));
 			$message->nativebodytype = $nbt;
 		}
 
@@ -1024,7 +1024,7 @@ break;
 			$entryid = mapi_msgstore_entryidfromsourcekey($this->store, $folderprops[PR_SOURCE_KEY]);
 			$mapifolder = mapi_msgstore_openentry($this->store, $entryid);
 			$folderprops = mapi_getprops($mapifolder, [PR_DISPLAY_NAME, PR_PARENT_ENTRYID, PR_ENTRYID, PR_SOURCE_KEY, PR_PARENT_SOURCE_KEY, PR_CONTAINER_CLASS, PR_ATTR_HIDDEN, PR_EXTENDED_FOLDER_FLAGS]);
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetFolder(): received insufficient of data from ICS. Fetching required data.');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetFolder(): received insufficient of data from ICS. Fetching required data.');
 		}
 
 		if (!isset($folderprops[PR_DISPLAY_NAME])
@@ -1033,14 +1033,14 @@ break;
 		   || !isset($folderprops[PR_ENTRYID])
 		   || !isset($folderprops[PR_PARENT_SOURCE_KEY])
 		   || !isset($storeprops[PR_IPM_SUBTREE_ENTRYID])) {
-			ZLog::Write(LOGLEVEL_ERROR, 'MAPIProvider->GetFolder(): invalid folder. Missing properties');
+			SLog::Write(LOGLEVEL_ERROR, 'MAPIProvider->GetFolder(): invalid folder. Missing properties');
 
 			return false;
 		}
 
 		// ignore hidden folders
 		if (isset($folderprops[PR_ATTR_HIDDEN]) && $folderprops[PR_ATTR_HIDDEN] != false) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->GetFolder(): invalid folder '%s' as it is a hidden folder (PR_ATTR_HIDDEN)", $folderprops[PR_DISPLAY_NAME]));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->GetFolder(): invalid folder '%s' as it is a hidden folder (PR_ATTR_HIDDEN)", $folderprops[PR_DISPLAY_NAME]));
 
 			return false;
 		}
@@ -1048,21 +1048,21 @@ break;
 		// ignore certain undesired folders, like "RSS Feeds" and "Suggested contacts"
 		if ((isset($folderprops[PR_CONTAINER_CLASS]) && $folderprops[PR_CONTAINER_CLASS] == 'IPF.Note.OutlookHomepage')
 				|| in_array($folderprops[PR_ENTRYID], $this->getSpecialFoldersData())) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->GetFolder(): folder '%s' should not be synchronized", $folderprops[PR_DISPLAY_NAME]));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->GetFolder(): folder '%s' should not be synchronized", $folderprops[PR_DISPLAY_NAME]));
 
 			return false;
 		}
 
 		$folder->BackendId = bin2hex($folderprops[PR_SOURCE_KEY]);
 		$folderOrigin = DeviceManager::FLD_ORIGIN_USER;
-		if (ZPush::GetBackend()->GetImpersonatedUser()) {
+		if (GSync::GetBackend()->GetImpersonatedUser()) {
 			$folderOrigin = DeviceManager::FLD_ORIGIN_IMPERSONATED;
 		}
-		$folder->serverid = ZPush::GetDeviceManager()->GetFolderIdForBackendId($folder->BackendId, true, $folderOrigin, $folderprops[PR_DISPLAY_NAME]);
+		$folder->serverid = GSync::GetDeviceManager()->GetFolderIdForBackendId($folder->BackendId, true, $folderOrigin, $folderprops[PR_DISPLAY_NAME]);
 		if ($folderprops[PR_PARENT_ENTRYID] == $storeprops[PR_IPM_SUBTREE_ENTRYID] || $folderprops[PR_PARENT_ENTRYID] == $storeprops[PR_IPM_PUBLIC_FOLDERS_ENTRYID]) {
 			$folder->parentid = '0';
 		} else {
-			$folder->parentid = ZPush::GetDeviceManager()->GetFolderIdForBackendId(bin2hex($folderprops[PR_PARENT_SOURCE_KEY]));
+			$folder->parentid = GSync::GetDeviceManager()->GetFolderIdForBackendId(bin2hex($folderprops[PR_PARENT_SOURCE_KEY]));
 		}
 		$folder->displayname = w2u($folderprops[PR_DISPLAY_NAME]);
 		$folder->type = $this->GetFolderType($folderprops[PR_ENTRYID], isset($folderprops[PR_CONTAINER_CLASS]) ? $folderprops[PR_CONTAINER_CLASS] : false);
@@ -1193,7 +1193,7 @@ break;
 			switch ($from) {
 				case 'inbox':
 					if (isset($inboxProps[$tag]) && $entryid == $inboxProps[$tag]) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Inbox found, key '%s'", $key));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Inbox found, key '%s'", $key));
 
 						return true;
 					}
@@ -1202,7 +1202,7 @@ break;
 
 				case 'store':
 					if (isset($msgstore_props[$tag]) && $entryid == $msgstore_props[$tag]) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Store folder found, key '%s'", $key));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Store folder found, key '%s'", $key));
 
 						return true;
 					}
@@ -1211,7 +1211,7 @@ break;
 
 				case 'root':
 					if (isset($rootProps[$tag]) && $entryid == $rootProps[$tag]) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Root folder found, key '%s'", $key));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Root folder found, key '%s'", $key));
 
 						return true;
 					}
@@ -1220,7 +1220,7 @@ break;
 
 				case 'additional':
 					if (isset($additional_ren_entryids[$tag]) && $entryid == $additional_ren_entryids[$tag]) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Additional folder found, key '%s'", $key));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->IsMAPIFolder(): Additional folder found, key '%s'", $key));
 
 						return true;
 					}
@@ -1376,11 +1376,11 @@ break;
 
 			if (isset($existingstartendprops[$amapping['starttime']]) && !isset($appointment->starttime)) {
 				$appointment->starttime = $existingstartendprops[$amapping['starttime']];
-				ZLog::Write(LOGLEVEL_WBXML, sprintf("MAPIProvider->setAppointment(): Parameter 'starttime' was not set, using value from MAPI %d (%s).", $appointment->starttime, gmstrftime('%Y%m%dT%H%M%SZ', $appointment->starttime)));
+				SLog::Write(LOGLEVEL_WBXML, sprintf("MAPIProvider->setAppointment(): Parameter 'starttime' was not set, using value from MAPI %d (%s).", $appointment->starttime, gmstrftime('%Y%m%dT%H%M%SZ', $appointment->starttime)));
 			}
 			if (isset($existingstartendprops[$amapping['endtime']]) && !isset($appointment->endtime)) {
 				$appointment->endtime = $existingstartendprops[$amapping['endtime']];
-				ZLog::Write(LOGLEVEL_WBXML, sprintf("MAPIProvider->setAppointment(): Parameter 'endtime' was not set, using value from MAPI %d (%s).", $appointment->endtime, gmstrftime('%Y%m%dT%H%M%SZ', $appointment->endtime)));
+				SLog::Write(LOGLEVEL_WBXML, sprintf("MAPIProvider->setAppointment(): Parameter 'endtime' was not set, using value from MAPI %d (%s).", $appointment->endtime, gmstrftime('%Y%m%dT%H%M%SZ', $appointment->endtime)));
 			}
 		}
 		if (!isset($appointment->starttime) || !isset($appointment->endtime)) {
@@ -1730,7 +1730,7 @@ break;
 			// delete it also if it was removed on a mobile
 			$picprops = mapi_getprops($mapimessage, [$contactprops['haspic']]);
 			if (isset($picprops[$contactprops['haspic']]) && $picprops[$contactprops['haspic']]) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'Contact already has a picture. Delete it');
+				SLog::Write(LOGLEVEL_DEBUG, 'Contact already has a picture. Delete it');
 
 				$attachtable = mapi_message_getattachmenttable($mapimessage);
 				mapi_table_restrict($attachtable, MAPIUtils::GetContactPicRestriction());
@@ -1777,7 +1777,7 @@ break;
 			$company = (isset($contact->companyname)) ? $contact->companyname : '';
 			$props[$contactprops['fileas']] = Utils::BuildFileAs($lastname, $firstname, $middlename, $company);
 		} else {
-			ZLog::Write(LOGLEVEL_DEBUG, 'FILEAS_ORDER not defined');
+			SLog::Write(LOGLEVEL_DEBUG, 'FILEAS_ORDER not defined');
 		}
 
 		mapi_setprops($mapimessage, $props);
@@ -2014,7 +2014,7 @@ break;
 				// if an "empty array" is to be saved, it the mvprop should be deleted - fixes Mantis #468
 				if (is_array($value) && empty($value)) {
 					$propsToDelete[] = $mapiprop;
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->setPropsInMAPI(): Property '%s' to be deleted as it is an empty array", $asprop));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("MAPIProvider->setPropsInMAPI(): Property '%s' to be deleted as it is an empty array", $asprop));
 				} else {
 					// all properties will be set at once
 					$propsToSet[$mapiprop] = $value;
@@ -2026,7 +2026,7 @@ break;
 
 		mapi_setprops($mapimessage, $propsToSet);
 		if (mapi_last_hresult()) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf('Failed to set properties, trying to set them separately. Error code was:%x', mapi_last_hresult()));
+			SLog::Write(LOGLEVEL_WARN, sprintf('Failed to set properties, trying to set them separately. Error code was:%x', mapi_last_hresult()));
 			$this->setPropsIndividually($mapimessage, $propsToSet, $mapiprops);
 		}
 
@@ -2049,7 +2049,7 @@ break;
 		foreach ($propsToSet as $prop => $value) {
 			mapi_setprops($mapimessage, [$prop => $value]);
 			if (mapi_last_hresult()) {
-				ZLog::Write(LOGLEVEL_ERROR, sprintf('Failed setting property [%s] with value [%s], error code was:%x', array_search($prop, $mapiprops), $value, mapi_last_hresult()));
+				SLog::Write(LOGLEVEL_ERROR, sprintf('Failed setting property [%s] with value [%s], error code was:%x', array_search($prop, $mapiprops), $value, mapi_last_hresult()));
 			}
 		}
 	}
@@ -2410,7 +2410,7 @@ break;
 		$addrbook = $this->getAddressbook();
 		$mailuser = mapi_ab_openentry($addrbook, $entryid);
 		if (!$mailuser) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('Unable to get mailuser for getFullnameFromEntryID (0x%X)', mapi_last_hresult()));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('Unable to get mailuser for getFullnameFromEntryID (0x%X)', mapi_last_hresult()));
 
 			return false;
 		}
@@ -2419,7 +2419,7 @@ break;
 		if (isset($props[PR_DISPLAY_NAME])) {
 			return $props[PR_DISPLAY_NAME];
 		}
-		ZLog::Write(LOGLEVEL_ERROR, sprintf('Unable to get fullname for getFullnameFromEntryID (0x%X)', mapi_last_hresult()));
+		SLog::Write(LOGLEVEL_ERROR, sprintf('Unable to get fullname for getFullnameFromEntryID (0x%X)', mapi_last_hresult()));
 
 		return false;
 	}
@@ -2785,7 +2785,7 @@ break;
 		$stream = false;
 		if (isset($mapiEmail[PR_EC_IMAP_EMAIL]) || MAPIUtils::GetError(PR_EC_IMAP_EMAIL, $mapiEmail) == MAPI_E_NOT_ENOUGH_MEMORY) {
 			$stream = mapi_openproperty($mapimessage, PR_EC_IMAP_EMAIL, IID_IStream, 0, 0);
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->imtoinet(): using PR_EC_IMAP_EMAIL as full RFC822 message');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->imtoinet(): using PR_EC_IMAP_EMAIL as full RFC822 message');
 		} else {
 			$addrbook = $this->getAddressbook();
 			$stream = mapi_inetmapi_imtoinet($this->session, $addrbook, $mapimessage, ['use_tnef' => -1, 'ignore_missing_attachments' => 1]);
@@ -2811,7 +2811,7 @@ break;
 				return true;
 			}
 		}
-		ZLog::Write(LOGLEVEL_ERROR, 'MAPIProvider->imtoinet(): got no stream or content from mapi_inetmapi_imtoinet()');
+		SLog::Write(LOGLEVEL_ERROR, 'MAPIProvider->imtoinet(): got no stream or content from mapi_inetmapi_imtoinet()');
 
 		return false;
 	}
@@ -2827,17 +2827,17 @@ break;
 		// get the available body preference types
 		$bpTypes = $contentparameters->GetBodyPreference();
 		if ($bpTypes !== false) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('BodyPreference types: %s', implode(', ', $bpTypes)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('BodyPreference types: %s', implode(', ', $bpTypes)));
 			// do not send mime data if the client requests it
 			if (($contentparameters->GetMimeSupport() == SYNC_MIMESUPPORT_NEVER) && ($key = array_search(SYNC_BODYPREFERENCE_MIME, $bpTypes) !== false)) {
 				unset($bpTypes[$key]);
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('Remove mime body preference type because the device required no mime support. BodyPreference types: %s', implode(', ', $bpTypes)));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('Remove mime body preference type because the device required no mime support. BodyPreference types: %s', implode(', ', $bpTypes)));
 			}
 			// get the best fitting preference type
 			$bpReturnType = Utils::GetBodyPreferenceBestMatch($bpTypes);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('GetBodyPreferenceBestMatch: %d', $bpReturnType));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('GetBodyPreferenceBestMatch: %d', $bpReturnType));
 			$bpo = $contentparameters->BodyPreference($bpReturnType);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("bpo: truncation size:'%d', allornone:'%d', preview:'%d'", $bpo->GetTruncationSize(), $bpo->GetAllOrNone(), $bpo->GetPreview()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("bpo: truncation size:'%d', allornone:'%d', preview:'%d'", $bpo->GetTruncationSize(), $bpo->GetAllOrNone(), $bpo->GetPreview()));
 
 			// Android Blackberry expects a full mime message for signed emails
 			// @see https://jira.z-hub.io/projects/ZP/issues/ZP-1154
@@ -2846,7 +2846,7 @@ break;
 			if (isset($props[PR_MESSAGE_CLASS])
 					&& stripos($props[PR_MESSAGE_CLASS], 'IPM.Note.SMIME.MultipartSigned') !== false
 					&& ($key = array_search(SYNC_BODYPREFERENCE_MIME, $bpTypes) !== false)) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIProvider->setMessageBody(): enforcing SYNC_BODYPREFERENCE_MIME type for a signed message'));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('MAPIProvider->setMessageBody(): enforcing SYNC_BODYPREFERENCE_MIME type for a signed message'));
 				$bpReturnType = SYNC_BODYPREFERENCE_MIME;
 			}
 
@@ -2858,7 +2858,7 @@ break;
 				) {
 				// Truncated plaintext requests are used on iOS for the preview in the email list. All images and links should be removed - see https://jira.z-hub.io/browse/ZP-1025
 				if ($bpReturnType == SYNC_BODYPREFERENCE_PLAIN) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->setMessageBody(): truncated plain-text body requested, stripping all links and images');
+					SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->setMessageBody(): truncated plain-text body requested, stripping all links and images');
 					// Get more data because of the filtering it's most probably going down in size. It's going to be truncated to the correct size below.
 					$plainbody = stream_get_contents($message->asbody->data, $bpo->GetTruncationSize() * 5);
 					$message->asbody->data = StringStreamWrapper::Open(preg_replace('/<http(s){0,1}:\/\/.*?>/i', '', $plainbody));
@@ -2940,7 +2940,7 @@ break;
 					break;
 			}
 		} else {
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->setASbody either type or data are not set. Setting to empty body');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->setASbody either type or data are not set. Setting to empty body');
 			$props[$appointmentprops['body']] = '';
 		}
 	}
@@ -2957,7 +2957,7 @@ break;
 		$this->addressbook = mapi_openaddressbook($this->session);
 		$result = mapi_last_hresult();
 		if ($result && $this->addressbook === false) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('MAPIProvider->getAddressbook error opening addressbook 0x%X', $result));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('MAPIProvider->getAddressbook error opening addressbook 0x%X', $result));
 
 			return false;
 		}
@@ -2972,7 +2972,7 @@ break;
 	 */
 	public function GetStoreProps() {
 		if (!isset($this->storeProps) || empty($this->storeProps)) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetStoreProps(): Getting store properties.');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetStoreProps(): Getting store properties.');
 			$this->storeProps = mapi_getprops($this->store, [PR_IPM_SUBTREE_ENTRYID, PR_IPM_OUTBOX_ENTRYID, PR_IPM_WASTEBASKET_ENTRYID, PR_IPM_SENTMAIL_ENTRYID, PR_ENTRYID, PR_IPM_PUBLIC_FOLDERS_ENTRYID, PR_IPM_FAVORITES_ENTRYID, PR_MAILBOX_OWNER_ENTRYID]);
 			// make sure all properties are set
 			if (!isset($this->storeProps[PR_IPM_WASTEBASKET_ENTRYID])) {
@@ -2999,7 +2999,7 @@ break;
 	 */
 	public function GetInboxProps() {
 		if (!isset($this->inboxProps) || empty($this->inboxProps)) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetInboxProps(): Getting inbox properties.');
+			SLog::Write(LOGLEVEL_DEBUG, 'MAPIProvider->GetInboxProps(): Getting inbox properties.');
 			$this->inboxProps = [];
 			$inbox = mapi_msgstore_getreceivefolder($this->store);
 			if ($inbox) {
@@ -3076,7 +3076,7 @@ break;
 						// Add PersistId and DataElementsSize lengths to the data size as they're not part of it
 						$persistData = substr($persistData, $unpackedData['dataSize'] + 4);
 					} else {
-						ZLog::Write(LOGLEVEL_INFO, 'MAPIProvider->getSpecialFoldersData(): persistent data is not valid');
+						SLog::Write(LOGLEVEL_INFO, 'MAPIProvider->getSpecialFoldersData(): persistent data is not valid');
 
 						break;
 					}
@@ -3098,7 +3098,7 @@ break;
 	 */
 	private function getEmailAddressFromSearchKey($searchKey) {
 		if (strpos($searchKey, ':') !== false && strpos($searchKey, '@') !== false) {
-			ZLog::Write(LOGLEVEL_INFO, 'MAPIProvider->getEmailAddressFromSearchKey(): fall back to PR_SEARCH_KEY or PR_SENT_REPRESENTING_SEARCH_KEY to resolve user and get email address');
+			SLog::Write(LOGLEVEL_INFO, 'MAPIProvider->getEmailAddressFromSearchKey(): fall back to PR_SEARCH_KEY or PR_SENT_REPRESENTING_SEARCH_KEY to resolve user and get email address');
 
 			return trim(strtolower(explode(':', $searchKey)[1]));
 		}
@@ -3117,7 +3117,7 @@ break;
 	public function GetMessageCategories($parentsourcekey, $sourcekey) {
 		$entryid = mapi_msgstore_entryidfromsourcekey($this->store, $parentsourcekey, $sourcekey);
 		if (!$entryid) {
-			ZLog::Write(LOGLEVEL_INFO, sprintf("MAPIProvider->GetMessageCategories(): Couldn't retrieve message, sourcekey: '%s', parentsourcekey: '%s'", bin2hex($sourcekey), bin2hex($parentsourcekey)));
+			SLog::Write(LOGLEVEL_INFO, sprintf("MAPIProvider->GetMessageCategories(): Couldn't retrieve message, sourcekey: '%s', parentsourcekey: '%s'", bin2hex($sourcekey), bin2hex($parentsourcekey)));
 
 			return false;
 		}

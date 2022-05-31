@@ -136,23 +136,23 @@ class SyncTask extends SyncObject {
 		}
 
 		if (isset($this->startdate, $this->duedate) && $this->duedate < $this->startdate) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'startdate' is HIGHER than 'duedate'. Check failed!", get_class($this)));
+			SLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'startdate' is HIGHER than 'duedate'. Check failed!", get_class($this)));
 
 			return false;
 		}
 
 		if (isset($this->utcstartdate, $this->utcduedate) && $this->utcduedate < $this->utcstartdate) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'utcstartdate' is HIGHER than 'utcduedate'. Check failed!", get_class($this)));
+			SLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'utcstartdate' is HIGHER than 'utcduedate'. Check failed!", get_class($this)));
 
 			return false;
 		}
 
 		if (isset($this->duedate) && $this->duedate != Utils::getDayStartOfTimestamp($this->duedate)) {
 			$this->duedate = Utils::getDayStartOfTimestamp($this->duedate);
-			ZLog::Write(LOGLEVEL_DEBUG, 'Set the due time to the start of the day');
+			SLog::Write(LOGLEVEL_DEBUG, 'Set the due time to the start of the day');
 			if (isset($this->startdate) && $this->duedate < $this->startdate) {
 				$this->startdate = Utils::getDayStartOfTimestamp($this->startdate);
-				ZLog::Write(LOGLEVEL_DEBUG, 'Set the start date to the start of the day');
+				SLog::Write(LOGLEVEL_DEBUG, 'Set the start date to the start of the day');
 			}
 		}
 

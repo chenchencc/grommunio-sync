@@ -333,7 +333,7 @@ class Search extends RequestProcessor {
 		}
 
 		// get SearchProvider
-		$searchprovider = ZPush::GetBackend()->GetSearchProvider();
+		$searchprovider = GSync::GetBackend()->GetSearchProvider();
 		$status = SYNC_SEARCHSTATUS_SUCCESS;
 		$rows = [];
 
@@ -356,7 +356,7 @@ class Search extends RequestProcessor {
 		} else {
 			$rows = ['searchtotal' => 0];
 			$status = SYNC_SEARCHSTATUS_SERVERERROR;
-			ZLog::Write(LOGLEVEL_WARN, sprintf("Searchtype '%s' is not supported.", $searchname));
+			SLog::Write(LOGLEVEL_WARN, sprintf("Searchtype '%s' is not supported.", $searchname));
 			self::$topCollector->AnnounceInformation(sprintf("Unsupported type '%s''", $searchname), true);
 		}
 		$searchprovider->Disconnect();

@@ -50,7 +50,7 @@ class ItemOperations extends RequestProcessor {
 			}
 
 			if (!$fetch && !$efc && !$move) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'Unknown item operation:' . print_r($el, 1));
+				SLog::Write(LOGLEVEL_DEBUG, 'Unknown item operation:' . print_r($el, 1));
 				self::$topCollector->AnnounceInformation('Unknown operation', true);
 
 				return false;

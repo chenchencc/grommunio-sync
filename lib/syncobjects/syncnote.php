@@ -68,7 +68,7 @@ class SyncNote extends SyncObject {
 			if (empty($result)) {
 				$result = array_intersect($this->categories, array_values(self::$unsupportedColors));
 				if (!empty($result)) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncNote->SetColorFromCategory(): unsupported color '%s', setting to color white", $result[0]));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncNote->SetColorFromCategory(): unsupported color '%s', setting to color white", $result[0]));
 					$result = ['White Category'];
 				}
 			}

@@ -51,12 +51,12 @@ class Ping extends RequestProcessor {
 			self::$topCollector->AnnounceInformation('StatusException: require HierarchySync', true);
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandlePing(): reference PolicyKey for PING: %s', $sc->GetReferencePolicyKey()));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('HandlePing(): reference PolicyKey for PING: %s', $sc->GetReferencePolicyKey()));
 
 		// receive PING initialization data
 		if ($params_present) {
 			self::$topCollector->AnnounceInformation('Processing PING data');
-			ZLog::Write(LOGLEVEL_DEBUG, 'HandlePing(): initialization data received');
+			SLog::Write(LOGLEVEL_DEBUG, 'HandlePing(): initialization data received');
 
 			if (self::$decoder->getElementStartTag(SYNC_PING_LIFETIME)) {
 				$sc->SetLifetime(self::$decoder->getElementContent());
@@ -95,12 +95,12 @@ class Ping extends RequestProcessor {
 							self::$deviceManager->GetFolderClassFromCacheByID($folderid);
 							// ZP-907: ignore all folders with SYNC_FOLDER_TYPE_UNKNOWN
 							if (self::$deviceManager->GetFolderTypeFromCacheById($folderid) == SYNC_FOLDER_TYPE_UNKNOWN) {
-								ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ignoring folder id '%s' as it's of type UNKNOWN ", $folderid));
+								SLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ignoring folder id '%s' as it's of type UNKNOWN ", $folderid));
 
 								continue;
 							}
 						} catch (NoHierarchyCacheAvailableException $nhca) {
-							ZLog::Write(LOGLEVEL_INFO, sprintf("HandlePing(): unknown collection '%s', triggering HierarchySync", $folderid));
+							SLog::Write(LOGLEVEL_INFO, sprintf("HandlePing(): unknown collection '%s', triggering HierarchySync", $folderid));
 							$pingstatus = SYNC_PINGSTATUS_FOLDERHIERSYNCREQUIRED;
 						}
 
@@ -109,7 +109,7 @@ class Ping extends RequestProcessor {
 						$foundchanges = true;
 					} elseif ($class == $spa->GetContentClass()) {
 						$pingable[] = $folderid;
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): using saved sync state for '%s' id '%s'", $spa->GetContentClass(), $folderid));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): using saved sync state for '%s' id '%s'", $spa->GetContentClass(), $folderid));
 					}
 				}
 				if (!self::$decoder->getElementEndTag()) {
@@ -132,7 +132,7 @@ class Ping extends RequestProcessor {
 
 			if (!$this->lifetimeBetweenBound($sc->GetLifetime())) {
 				$pingstatus = SYNC_PINGSTATUS_HBOUTOFRANGE;
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ping lifetime not between bound (higher bound:'%d' lower bound:'%d' current lifetime:'%d'. Returning SYNC_PINGSTATUS_HBOUTOFRANGE.", PING_HIGHER_BOUND_LIFETIME, PING_LOWER_BOUND_LIFETIME, $sc->GetLifetime()));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ping lifetime not between bound (higher bound:'%d' lower bound:'%d' current lifetime:'%d'. Returning SYNC_PINGSTATUS_HBOUTOFRANGE.", PING_HIGHER_BOUND_LIFETIME, PING_LOWER_BOUND_LIFETIME, $sc->GetLifetime()));
 			}
 			// save changed data
 			foreach ($sc as $folderid => $spa) {
@@ -144,10 +144,10 @@ class Ping extends RequestProcessor {
 			// if not, we indicate that there is nothing to do.
 			if (!$sc->PingableFolders()) {
 				$pingstatus = SYNC_PINGSTATUS_FAILINGPARAMS;
-				ZLog::Write(LOGLEVEL_DEBUG, 'HandlePing(): no pingable folders found and no initialization data sent. Returning SYNC_PINGSTATUS_FAILINGPARAMS.');
+				SLog::Write(LOGLEVEL_DEBUG, 'HandlePing(): no pingable folders found and no initialization data sent. Returning SYNC_PINGSTATUS_FAILINGPARAMS.');
 			} elseif (!$this->lifetimeBetweenBound($sc->GetLifetime())) {
 				$pingstatus = SYNC_PINGSTATUS_FAILINGPARAMS;
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ping lifetime not between bound (higher bound:'%d' lower bound:'%d' current lifetime:'%d'. Returning SYNC_PINGSTATUS_FAILINGPARAMS.", PING_HIGHER_BOUND_LIFETIME, PING_LOWER_BOUND_LIFETIME, $sc->GetLifetime()));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("HandlePing(): ping lifetime not between bound (higher bound:'%d' lower bound:'%d' current lifetime:'%d'. Returning SYNC_PINGSTATUS_FAILINGPARAMS.", PING_HIGHER_BOUND_LIFETIME, PING_LOWER_BOUND_LIFETIME, $sc->GetLifetime()));
 			}
 		}
 

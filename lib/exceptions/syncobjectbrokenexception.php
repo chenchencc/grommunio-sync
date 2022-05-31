@@ -8,7 +8,7 @@
  * The SyncObject may be available for further analysis.
  */
 
-class SyncObjectBrokenException extends ZPushException {
+class SyncObjectBrokenException extends GSyncException {
 	protected $defaultLogLevel = LOGLEVEL_WARN;
 	private $syncObject;
 

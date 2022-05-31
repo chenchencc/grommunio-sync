@@ -34,8 +34,8 @@ class FolderSync extends RequestProcessor {
 		// every FolderSync with SyncKey 0 should return the supported AS version & command headers
 		if ($synckey == '0') {
 			self::$specialHeaders = [];
-			self::$specialHeaders[] = ZPush::GetSupportedProtocolVersions();
-			self::$specialHeaders[] = ZPush::GetSupportedCommands();
+			self::$specialHeaders[] = GSync::GetSupportedProtocolVersions();
+			self::$specialHeaders[] = GSync::GetSupportedCommands();
 		}
 
 		$status = SYNC_FSSTATUS_SUCCESS;
@@ -61,7 +61,7 @@ class FolderSync extends RequestProcessor {
 		$changesMem = self::$deviceManager->GetHierarchyChangesWrapper();
 
 		// the hierarchyCache should now fully be initialized - check for changes in the additional folders
-		$changesMem->Config(ZPush::GetAdditionalSyncFolders(false), ChangesMemoryWrapper::SYNCHRONIZING);
+		$changesMem->Config(GSync::GetAdditionalSyncFolders(false), ChangesMemoryWrapper::SYNCHRONIZING);
 
 		// reset to default store in backend
 		self::$backend->Setup(false);
@@ -117,7 +117,7 @@ class FolderSync extends RequestProcessor {
 								break;
 						}
 					} else {
-						ZLog::Write(LOGLEVEL_WARN, sprintf("Request->HandleFolderSync(): ignoring incoming folderchange for folder '%s' as status indicates problem.", $folder->displayname));
+						SLog::Write(LOGLEVEL_WARN, sprintf("Request->HandleFolderSync(): ignoring incoming folderchange for folder '%s' as status indicates problem.", $folder->displayname));
 						self::$topCollector->AnnounceInformation('Incoming change ignored', true);
 					}
 				} catch (StatusException $stex) {
@@ -177,7 +177,7 @@ class FolderSync extends RequestProcessor {
 
 					// if partial sync is allowed, stop if this takes too long
 					if (USE_PARTIAL_FOLDERSYNC && Request::IsRequestTimeoutReached()) {
-						ZLog::Write(LOGLEVEL_WARN, sprintf('Request->HandleFolderSync(): Exporting folders is too slow. In %d seconds only %d from %d changes were processed.', (time() - $_SERVER['REQUEST_TIME']), $exported, $totalChanges));
+						SLog::Write(LOGLEVEL_WARN, sprintf('Request->HandleFolderSync(): Exporting folders is too slow. In %d seconds only %d from %d changes were processed.', (time() - $_SERVER['REQUEST_TIME']), $exported, $totalChanges));
 						self::$topCollector->AnnounceInformation(sprintf('Partial export of %d out of %d folders', $exported, $totalChanges), true);
 						self::$deviceManager->SetFolderSyncComplete(false);
 						$partial = true;
@@ -192,7 +192,7 @@ class FolderSync extends RequestProcessor {
 					self::$deviceManager->SetFolderSyncComplete(true);
 					// reset the loop data to prevent any loop detection to kick in now
 					self::$deviceManager->ClearLoopDetectionData(Request::GetAuthUserString(), Request::GetDeviceID());
-					ZLog::Write(LOGLEVEL_INFO, 'Request->HandleFolderSync(): Chunked exporting of folders completed successfully');
+					SLog::Write(LOGLEVEL_INFO, 'Request->HandleFolderSync(): Chunked exporting of folders completed successfully');
 				}
 
 				// get the new state from the backend
@@ -246,7 +246,7 @@ class FolderSync extends RequestProcessor {
 				SyncCollections::InvalidatePingableFlags();
 			}
 			// save the SyncParameters if it changed or the reference policy key is not set or different
-			if ($spa->IsDataChanged() || !$spa->HasReferencePolicyKey() || ZPush::GetProvisioningManager()->ProvisioningRequired($spa->GetReferencePolicyKey(), true, false)) {
+			if ($spa->IsDataChanged() || !$spa->HasReferencePolicyKey() || GSync::GetProvisioningManager()->ProvisioningRequired($spa->GetReferencePolicyKey(), true, false)) {
 				// saves the SPA (while updating the reference policy key)
 				$spa->SetLastSynctime(time());
 				self::$deviceManager->GetStateManager()->SetSynchedFolderState($spa);

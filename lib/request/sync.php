@@ -9,7 +9,7 @@
 
 class Sync extends RequestProcessor {
 	// Ignored SMS identifier
-	public const ZPUSHIGNORESMS = 'ZPISMS';
+	public const GSYNCIGNORESMS = 'ZPISMS';
 	private $importer;
 	private $globallyExportedItems;
 	private $singleFolder;
@@ -38,11 +38,11 @@ class Sync extends RequestProcessor {
 		// check if the hierarchySync was fully completed
 		if (USE_PARTIAL_FOLDERSYNC) {
 			if (self::$deviceManager->GetFolderSyncComplete() === false) {
-				ZLog::Write(LOGLEVEL_INFO, 'Request->HandleSync(): Sync request aborted, as exporting of folders has not yet completed');
+				SLog::Write(LOGLEVEL_INFO, 'Request->HandleSync(): Sync request aborted, as exporting of folders has not yet completed');
 				self::$topCollector->AnnounceInformation('Aborted due incomplete folder sync', true);
 				$status = SYNC_STATUS_FOLDERHIERARCHYCHANGED;
 			} else {
-				ZLog::Write(LOGLEVEL_INFO, 'Request->HandleSync(): FolderSync marked as complete');
+				SLog::Write(LOGLEVEL_INFO, 'Request->HandleSync(): FolderSync marked as complete');
 			}
 		}
 
@@ -51,7 +51,7 @@ class Sync extends RequestProcessor {
 			// AS 1.0 sends version information in WBXML
 			if (self::$decoder->getElementStartTag(SYNC_VERSION)) {
 				$sync_version = self::$decoder->getElementContent();
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("WBXML sync version: '%s'", $sync_version));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("WBXML sync version: '%s'", $sync_version));
 				if (!self::$decoder->getElementEndTag()) {
 					return false;
 				}
@@ -83,7 +83,7 @@ class Sync extends RequestProcessor {
 					// for AS versions < 2.5
 					if (self::$decoder->getElementStartTag(SYNC_FOLDERTYPE)) {
 						$class = self::$decoder->getElementContent();
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync folder: '%s'", $class));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync folder: '%s'", $class));
 
 						if (!self::$decoder->getElementEndTag()) {
 							return false;
@@ -133,7 +133,7 @@ class Sync extends RequestProcessor {
 							$spa->SetMoveState(false);
 						} elseif ($synckey !== false) {
 							if ($synckey !== $spa->GetSyncKey() && $synckey !== $spa->GetNewSyncKey()) {
-								ZLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Synckey does not match latest saved for this folder or there is a move state, removing folderstat to force Exporter setup');
+								SLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Synckey does not match latest saved for this folder or there is a move state, removing folderstat to force Exporter setup');
 								$spa->DelFolderStat();
 							}
 							$spa->SetSyncKey($synckey);
@@ -158,7 +158,7 @@ class Sync extends RequestProcessor {
 					if (!$spa->HasContentClass()) {
 						try {
 							$spa->SetContentClass(self::$deviceManager->GetFolderClassFromCacheByID($spa->GetFolderId()));
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("GetFolderClassFromCacheByID from Device Manager: '%s' for id:'%s'", $spa->GetContentClass(), $spa->GetFolderId()));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("GetFolderClassFromCacheByID from Device Manager: '%s' for id:'%s'", $spa->GetContentClass(), $spa->GetFolderId()));
 						} catch (NoHierarchyCacheAvailableException $nhca) {
 							$status = SYNC_STATUS_FOLDERHIERARCHYCHANGED;
 							self::$deviceManager->ForceFullResync();
@@ -172,7 +172,7 @@ class Sync extends RequestProcessor {
 					if ($spa->HasContentClass()) {
 						self::$topCollector->AnnounceInformation(sprintf('%s request', $spa->GetContentClass()), $this->singleFolder);
 					} else {
-						ZLog::Write(LOGLEVEL_WARN, 'Not possible to determine class of request. Request did not contain class and apparently there is an issue with the HierarchyCache.');
+						SLog::Write(LOGLEVEL_WARN, 'Not possible to determine class of request. Request did not contain class and apparently there is an issue with the HierarchyCache.');
 					}
 
 					// SUPPORTED properties
@@ -266,7 +266,7 @@ class Sync extends RequestProcessor {
 							// foldertype definition
 							if (self::$decoder->getElementStartTag(SYNC_FOLDERTYPE)) {
 								$foldertype = self::$decoder->getElementContent();
-								ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): specified options block with foldertype '%s'", $foldertype));
+								SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): specified options block with foldertype '%s'", $foldertype));
 
 								// switch the foldertype for the next options
 								$spa->UseCPO($foldertype);
@@ -421,25 +421,25 @@ class Sync extends RequestProcessor {
 					$maxAllowed = self::$deviceManager->GetFilterType($spa->GetFolderId(), $spa->GetBackendFolderId());
 					if ($maxAllowed > SYNC_FILTERTYPE_ALL
 						&& (!$spa->HasFilterType() || $spa->GetFilterType() == SYNC_FILTERTYPE_ALL || $spa->GetFilterType() > $maxAllowed)) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): FilterType applied globally or specifically, using value: %s', $maxAllowed));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): FilterType applied globally or specifically, using value: %s', $maxAllowed));
 						$spa->SetFilterType($maxAllowed);
 					}
 
 					if ($currentFilterType != $spa->GetFilterType()) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): FilterType has changed (old: '%s', new: '%s'), removing folderstat to force Exporter setup", $currentFilterType, $spa->GetFilterType()));
+						SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): FilterType has changed (old: '%s', new: '%s'), removing folderstat to force Exporter setup", $currentFilterType, $spa->GetFilterType()));
 						$spa->DelFolderStat();
 					}
 
 					// Check if the hierarchycache is available. If not, trigger a HierarchySync
 					if (self::$deviceManager->IsHierarchySyncRequired()) {
 						$status = SYNC_STATUS_FOLDERHIERARCHYCHANGED;
-						ZLog::Write(LOGLEVEL_DEBUG, 'HierarchyCache is also not available. Triggering HierarchySync to device');
+						SLog::Write(LOGLEVEL_DEBUG, 'HierarchyCache is also not available. Triggering HierarchySync to device');
 					}
 
 					if (($el = self::$decoder->getElementStartTag(SYNC_PERFORM)) && ($el[EN_FLAGS] & EN_FLAGS_CONTENT)) {
 						// We can not proceed here as the content class is unknown
 						if ($status != SYNC_STATUS_SUCCESS) {
-							ZLog::Write(LOGLEVEL_WARN, 'Ignoring all incoming actions as global status indicates problem.');
+							SLog::Write(LOGLEVEL_WARN, 'Ignoring all incoming actions as global status indicates problem.');
 							$wbxmlproblem = true;
 
 							break;
@@ -469,7 +469,7 @@ class Sync extends RequestProcessor {
 							// Foldertype sent when syncing SMS
 							if (self::$decoder->getElementStartTag(SYNC_FOLDERTYPE)) {
 								$foldertype = self::$decoder->getElementContent();
-								ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): incoming data with foldertype '%s'", $foldertype));
+								SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): incoming data with foldertype '%s'", $foldertype));
 
 								if (!self::$decoder->getElementEndTag()) {
 									return false;
@@ -499,7 +499,7 @@ class Sync extends RequestProcessor {
 
 							// Get the SyncMessage if sent
 							if (($el = self::$decoder->getElementStartTag(SYNC_DATA)) && ($el[EN_FLAGS] & EN_FLAGS_CONTENT)) {
-								$message = ZPush::getSyncObjectFromFolderClass($spa->GetContentClass());
+								$message = GSync::getSyncObjectFromFolderClass($spa->GetContentClass());
 								$message->Decode(self::$decoder);
 
 								// set Ghosted fields
@@ -527,7 +527,7 @@ class Sync extends RequestProcessor {
 									if ($status == SYNC_STATUS_SUCCESS) {
 										$this->importMessage($spa, $actiondata, $element[EN_TAG], $message, $clientid, $serverid, $foldertype, $nchanges);
 									} else {
-										ZLog::Write(LOGLEVEL_WARN, 'Ignored incoming change, global status indicates problem.');
+										SLog::Write(LOGLEVEL_WARN, 'Ignored incoming change, global status indicates problem.');
 									}
 
 									break;
@@ -545,7 +545,7 @@ class Sync extends RequestProcessor {
 						}
 
 						if ($status == SYNC_STATUS_SUCCESS && $this->importer !== false) {
-							ZLog::Write(LOGLEVEL_INFO, sprintf("Processed '%d' incoming changes", $nchanges));
+							SLog::Write(LOGLEVEL_INFO, sprintf("Processed '%d' incoming changes", $nchanges));
 							if (!$actiondata['fetchids']) {
 								self::$topCollector->AnnounceInformation(sprintf('%d incoming', $nchanges), $this->singleFolder);
 								$this->saveMultiFolderInfo('incoming', $nchanges);
@@ -609,7 +609,7 @@ class Sync extends RequestProcessor {
 
 			if (self::$decoder->getElementStartTag(SYNC_WINDOWSIZE)) {
 				$sc->SetGlobalWindowSize(self::$decoder->getElementContent());
-				ZLog::Write(LOGLEVEL_DEBUG, 'Sync(): Global WindowSize requested: ' . $sc->GetGlobalWindowSize());
+				SLog::Write(LOGLEVEL_DEBUG, 'Sync(): Global WindowSize requested: ' . $sc->GetGlobalWindowSize());
 				if (!self::$decoder->getElementEndTag()) { // SYNC_WINDOWSIZE
 					return false;
 				}
@@ -635,13 +635,13 @@ class Sync extends RequestProcessor {
 		if (isset($hbinterval)) {
 			if ($hbinterval < 60 || $hbinterval > 3540) {
 				$status = SYNC_STATUS_INVALIDWAITORHBVALUE;
-				ZLog::Write(LOGLEVEL_WARN, sprintf("HandleSync(): Invalid heartbeat or wait value '%s'", $hbinterval));
+				SLog::Write(LOGLEVEL_WARN, sprintf("HandleSync(): Invalid heartbeat or wait value '%s'", $hbinterval));
 			}
 		}
 
 		// Partial & Empty Syncs need saved data to proceed with synchronization
 		if ($status == SYNC_STATUS_SUCCESS && ($emptysync === true || $partial === true)) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Partial or Empty sync requested. Retrieving data of synchronized folders.'));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Partial or Empty sync requested. Retrieving data of synchronized folders.'));
 
 			// Load all collections - do not overwrite existing (received!), load states, check permissions and only load confirmed states!
 			try {
@@ -696,7 +696,7 @@ class Sync extends RequestProcessor {
 				// some androids do heartbeat on the OUTBOX folder, with weird results - ZP-362
 				// we do not load the state so we will never get relevant changes on the OUTBOX folder
 				if (self::$deviceManager->GetFolderTypeFromCacheById($folderid) == SYNC_FOLDER_TYPE_OUTBOX) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Heartbeat on Outbox folder not allowed'));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Heartbeat on Outbox folder not allowed'));
 
 					continue;
 				}
@@ -714,7 +714,7 @@ class Sync extends RequestProcessor {
 
 				try {
 					// always check for changes
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Entering Heartbeat mode'));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Entering Heartbeat mode'));
 					$foundchanges = $sc->CheckForChanges($sc->GetLifetime(), $interval);
 				} catch (StatusException $stex) {
 					if ($stex->getCode() == SyncCollections::OBSOLETE_CONNECTION) {
@@ -742,7 +742,7 @@ class Sync extends RequestProcessor {
 					}
 
 					if ($status == SYNC_STATUS_SUCCESS) {
-						ZLog::Write(LOGLEVEL_DEBUG, 'No changes found and no other process changed states. Replying with empty response and closing connection.');
+						SLog::Write(LOGLEVEL_DEBUG, 'No changes found and no other process changed states. Replying with empty response and closing connection.');
 						self::$specialHeaders = [];
 						self::$specialHeaders[] = 'Connection: close';
 
@@ -755,10 +755,10 @@ class Sync extends RequestProcessor {
 						// check if there were other sync requests for a folder during the heartbeat
 						$spa = $sc->GetCollection($folderid);
 						if ($changecount > 0 && $sc->WaitedForChanges() && self::$deviceManager->CheckHearbeatStateIntegrity($spa->GetFolderId(), $spa->GetUuid(), $spa->GetUuidCounter())) {
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): heartbeat: found %d changes in '%s' which was already synchronized. Heartbeat aborted!", $changecount, $folderid));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): heartbeat: found %d changes in '%s' which was already synchronized. Heartbeat aborted!", $changecount, $folderid));
 							$status = SYNC_COMMONSTATUS_SYNCSTATEVERSIONINVALID;
 						} else {
-							ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): heartbeat: found %d changes in '%s'", $changecount, $folderid));
+							SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): heartbeat: found %d changes in '%s'", $changecount, $folderid));
 						}
 					}
 				}
@@ -766,7 +766,7 @@ class Sync extends RequestProcessor {
 		}
 
 		// Start the output
-		ZLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Start Output');
+		SLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Start Output');
 
 		// global status
 		// SYNC_COMMONSTATUS_* start with values from 101
@@ -787,13 +787,13 @@ class Sync extends RequestProcessor {
 			$actiondata = $sc->GetParameter($spa, 'actiondata');
 
 			if ($status == SYNC_STATUS_SUCCESS && (!$spa->GetContentClass() || !$spa->GetFolderId())) {
-				ZLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): no content class or folderid found for collection.'));
+				SLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): no content class or folderid found for collection.'));
 
 				continue;
 			}
 
 			if (!$sc->GetParameter($spa, 'requested')) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): partial sync for folder class '%s' with id '%s'", $spa->GetContentClass(), $spa->GetFolderId()));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync(): partial sync for folder class '%s' with id '%s'", $spa->GetContentClass(), $spa->GetFolderId()));
 				// reload state and initialize StateMachine correctly
 				$sc->AddParameter($spa, 'state', null);
 				$status = $this->loadStates($sc, $spa, $actiondata);
@@ -810,29 +810,29 @@ class Sync extends RequestProcessor {
 			if ($status == SYNC_STATUS_SUCCESS && ($sc->GetParameter($spa, 'getchanges') || !$spa->HasSyncKey())) {
 				// no need to run the exporter if the globalwindowsize is already full - if collection already has a synckey (ZP-1215)
 				if ($sc->GetGlobalWindowSize() == $this->globallyExportedItems && $spa->HasSyncKey()) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as GlobalWindowSize is full.", $spa->GetFolderId()));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as GlobalWindowSize is full.", $spa->GetFolderId()));
 					$setupExporter = false;
 				}
 				// if the maximum request timeout is reached, stop processing other collections
 				if (Request::IsRequestTimeoutReached()) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as request timeout reached, omitting output for collection.", $spa->GetFolderId()));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as request timeout reached, omitting output for collection.", $spa->GetFolderId()));
 					$setupExporter = false;
 				}
 
 				// if max memory allocation is reached, stop processing other collections
 				if (Request::IsRequestMemoryLimitReached()) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as max memory allocatation reached, omitting output for collection.", $spa->GetFolderId()));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): no exporter setup for '%s' as max memory allocatation reached, omitting output for collection.", $spa->GetFolderId()));
 					$setupExporter = false;
 				}
 
 				// force exporter run if there is a saved status
 				if ($setupExporter && self::$deviceManager->HasFolderSyncStatus($spa->GetFolderId())) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): forcing exporter setup for '%s' as a sync status is saved - ignoring backend folder stats", $spa->GetFolderId()));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync(): forcing exporter setup for '%s' as a sync status is saved - ignoring backend folder stats", $spa->GetFolderId()));
 				}
 				// compare the folder statistics if the backend supports this
 				elseif ($setupExporter && self::$backend->HasFolderStats()) {
 					// check if the folder stats changed -> if not, don't setup the exporter, there are no changes!
-					$newFolderStat = self::$backend->GetFolderStat(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()), $spa->GetBackendFolderId());
+					$newFolderStat = self::$backend->GetFolderStat(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()), $spa->GetBackendFolderId());
 					if ($newFolderStat !== false && !$spa->IsExporterRunRequired($newFolderStat, true)) {
 						$changecount = 0;
 						$setupExporter = false;
@@ -847,7 +847,7 @@ class Sync extends RequestProcessor {
 					if ($status == SYNC_STATUS_SUCCESS) {
 						try {
 							// if this is an additional folder the backend has to be setup correctly
-							if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
+							if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
 								throw new StatusException(sprintf('HandleSync() could not Setup() the backend for folder id %s/%s', $spa->GetFolderId(), $spa->GetBackendFolderId()), SYNC_STATUS_FOLDERHIERARCHYCHANGED);
 							}
 
@@ -863,7 +863,7 @@ class Sync extends RequestProcessor {
 
 						try {
 							// Stream the messages directly to the PDA
-							$streamimporter = new ImportChangesStream(self::$encoder, ZPush::getSyncObjectFromFolderClass($spa->GetContentClass()));
+							$streamimporter = new ImportChangesStream(self::$encoder, GSync::getSyncObjectFromFolderClass($spa->GetContentClass()));
 
 							if ($exporter !== false) {
 								$exporter->Config($sc->GetParameter($spa, 'state'));
@@ -909,7 +909,7 @@ class Sync extends RequestProcessor {
 			else {
 				// when reaching the global limit for changes of all collections, stop processing other collections (ZP-697)
 				if ($sc->GetGlobalWindowSize() <= $this->globallyExportedItems) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'Global WindowSize for amount of exported changes reached, omitting output for collection.');
+					SLog::Write(LOGLEVEL_DEBUG, 'Global WindowSize for amount of exported changes reached, omitting output for collection.');
 
 					continue;
 				}
@@ -923,7 +923,7 @@ class Sync extends RequestProcessor {
 			// Fir AS 14.0+ omit output for folder, if there were no incoming or outgoing changes and no Fetch
 			if (Request::GetProtocolVersion() >= 14.0 && !$spa->HasNewSyncKey() && $changecount == 0 && empty($actiondata['fetchids']) && $status == SYNC_STATUS_SUCCESS
 					&& !$spa->HasConfirmationChanged() && ($newFolderStat === false || !$spa->IsExporterRunRequired($newFolderStat))) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync: No changes found for %s folder id '%s'. Omitting output.", $spa->GetContentClass(), $spa->GetFolderId()));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("HandleSync: No changes found for %s folder id '%s'. Omitting output.", $spa->GetContentClass(), $spa->GetFolderId()));
 
 				continue;
 			}
@@ -967,7 +967,7 @@ class Sync extends RequestProcessor {
 		// final top announcement for a multi-folder sync
 		if ($sc->GetCollectionCount() > 1) {
 			self::$topCollector->AnnounceInformation($this->getMultiFolderInfoLine($sc->GetCollectionCount()), true);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync: Processed %d folders', $sc->GetCollectionCount()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync: Processed %d folders', $sc->GetCollectionCount()));
 		}
 
 		// update the waittime waited
@@ -1021,7 +1021,7 @@ class Sync extends RequestProcessor {
 		self::$encoder->startTag(SYNC_FOLDER);
 
 		if ($spa->HasContentClass()) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('Folder type: %s', $spa->GetContentClass()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('Folder type: %s', $spa->GetContentClass()));
 			// AS 12.0 devices require content class
 			if (Request::GetProtocolVersion() < 12.1) {
 				self::$encoder->startTag(SYNC_FOLDERTYPE);
@@ -1116,15 +1116,15 @@ class Sync extends RequestProcessor {
 					$fetchstatus = SYNC_STATUS_SUCCESS;
 
 					// if this is an additional folder the backend has to be setup correctly
-					if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
+					if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
 						throw new StatusException(sprintf('HandleSync(): could not Setup() the backend to fetch in folder id %s/%s', $spa->GetFolderId(), $spa->GetBackendFolderId()), SYNC_STATUS_OBJECTNOTFOUND);
 					}
 
 					$data = self::$backend->Fetch($spa->GetBackendFolderId(), $id, $spa->GetCPO());
 
 					// check if the message is broken
-					if (ZPush::GetDeviceManager(false) && ZPush::GetDeviceManager()->DoNotStreamMessage($id, $data)) {
-						ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): message not to be streamed as requested by DeviceManager, id = %s', $id));
+					if (GSync::GetDeviceManager(false) && GSync::GetDeviceManager()->DoNotStreamMessage($id, $data)) {
+						SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): message not to be streamed as requested by DeviceManager, id = %s', $id));
 						$fetchstatus = SYNC_STATUS_CLIENTSERVERCONVERSATIONERROR;
 					}
 				} catch (StatusException $stex) {
@@ -1145,7 +1145,7 @@ class Sync extends RequestProcessor {
 					$data->Encode(self::$encoder);
 					self::$encoder->endTag();
 				} else {
-					ZLog::Write(LOGLEVEL_WARN, sprintf("Unable to Fetch '%s'", $id));
+					SLog::Write(LOGLEVEL_WARN, sprintf("Unable to Fetch '%s'", $id));
 				}
 				self::$encoder->endTag();
 			}
@@ -1159,7 +1159,7 @@ class Sync extends RequestProcessor {
 			// limit windowSize to the max available limit of the global window size left
 			$globallyAvailable = $sc->GetGlobalWindowSize() - $this->globallyExportedItems;
 			if ($changecount > $globallyAvailable && $windowSize > $globallyAvailable) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Limit window size to %d as the global window size limit will be reached', $globallyAvailable));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Limit window size to %d as the global window size limit will be reached', $globallyAvailable));
 				$windowSize = $globallyAvailable;
 			}
 			// send <MoreAvailable/> if there are more changes than fit in the folder windowsize
@@ -1193,11 +1193,11 @@ class Sync extends RequestProcessor {
 				} catch (SyncObjectBrokenException $mbe) {
 					$brokenSO = $mbe->GetSyncObject();
 					if (!$brokenSO) {
-						ZLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): Caught SyncObjectBrokenException but broken SyncObject not available. This should be fixed in the backend.'));
+						SLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): Caught SyncObjectBrokenException but broken SyncObject not available. This should be fixed in the backend.'));
 					} else {
 						if (!isset($brokenSO->id)) {
 							$brokenSO->id = 'Unknown ID';
-							ZLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): Caught SyncObjectBrokenException but no ID of object set. This should be fixed in the backend.'));
+							SLog::Write(LOGLEVEL_ERROR, sprintf('HandleSync(): Caught SyncObjectBrokenException but no ID of object set. This should be fixed in the backend.'));
 						}
 						self::$deviceManager->AnnounceIgnoredMessage($spa->GetFolderId(), $brokenSO->id, $brokenSO);
 					}
@@ -1214,7 +1214,7 @@ class Sync extends RequestProcessor {
 				}
 
 				if ($n >= $windowSize || Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-					ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Exported maxItems of messages: %d / %d', $n, $changecount));
+					SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleSync(): Exported maxItems of messages: %d / %d', $n, $changecount));
 
 					break;
 				}
@@ -1230,7 +1230,7 @@ class Sync extends RequestProcessor {
 
 			// log the request timeout
 			if (Request::IsRequestTimeoutReached() || Request::IsRequestMemoryLimitReached()) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!');
+				SLog::Write(LOGLEVEL_DEBUG, 'HandleSync(): Stopping export as limits of request timeout or available memory are almost reached!');
 				// Send a <MoreAvailable/> tag if we reached the request timeout or max memory, there are more changes and a moreavailable was not already send
 				if (!$moreAvailableSent && ($n > $windowSize)) {
 					self::$encoder->startTag(SYNC_MOREAVAILABLE, false, true);
@@ -1255,11 +1255,11 @@ class Sync extends RequestProcessor {
 
 				// we should update the folderstat, but we recheck to see if it changed. If so, it's not updated to force another sync
 				if (self::$backend->HasFolderStats()) {
-					$newFolderStatAfterExport = self::$backend->GetFolderStat(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()), $spa->GetBackendFolderId());
+					$newFolderStatAfterExport = self::$backend->GetFolderStat(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()), $spa->GetBackendFolderId());
 					if ($newFolderStat === $newFolderStatAfterExport) {
 						$this->setFolderStat($spa, $newFolderStat);
 					} else {
-						ZLog::Write(LOGLEVEL_DEBUG, 'Sync() Folderstat differs after export, force another exporter run.');
+						SLog::Write(LOGLEVEL_DEBUG, 'Sync() Folderstat differs after export, force another exporter run.');
 					}
 				}
 			} else {
@@ -1294,7 +1294,7 @@ class Sync extends RequestProcessor {
 			if (isset($state) && $status == SYNC_STATUS_SUCCESS) {
 				self::$deviceManager->GetStateManager()->SetSyncState($spa->GetNewSyncKey(), $state, $spa->GetFolderId());
 			} else {
-				ZLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): error saving '%s' - no state information available", $spa->GetNewSyncKey()));
+				SLog::Write(LOGLEVEL_ERROR, sprintf("HandleSync(): error saving '%s' - no state information available", $spa->GetNewSyncKey()));
 			}
 		}
 
@@ -1320,7 +1320,7 @@ class Sync extends RequestProcessor {
 		$status = SYNC_STATUS_SUCCESS;
 
 		if ($sc->GetParameter($spa, 'state') == null) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("Sync->loadStates(): loading states for folder '%s'", $spa->GetFolderId()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("Sync->loadStates(): loading states for folder '%s'", $spa->GetFolderId()));
 
 			try {
 				$sc->AddParameter($spa, 'state', self::$deviceManager->GetStateManager()->GetSyncState($spa->GetSyncKey()));
@@ -1331,7 +1331,7 @@ class Sync extends RequestProcessor {
 				}
 
 				// if this is an additional folder the backend has to be setup correctly
-				if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
+				if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($spa->GetBackendFolderId()))) {
 					throw new StatusException(sprintf('HandleSync() could not Setup() the backend for folder id %s/%s', $spa->GetFolderId(), $spa->GetBackendFolderId()), SYNC_STATUS_FOLDERHIERARCHYCHANGED);
 				}
 			} catch (StateNotFoundException $snfex) {
@@ -1359,7 +1359,7 @@ class Sync extends RequestProcessor {
 	 * @return status indicating if there were errors. If no errors, status is SYNC_STATUS_SUCCESS
 	 */
 	private function getImporter($sc, $spa, &$actiondata) {
-		ZLog::Write(LOGLEVEL_DEBUG, 'Sync->getImporter(): initialize importer');
+		SLog::Write(LOGLEVEL_DEBUG, 'Sync->getImporter(): initialize importer');
 		$status = SYNC_STATUS_SUCCESS;
 
 		// load the states with failsave data
@@ -1434,7 +1434,7 @@ class Sync extends RequestProcessor {
 				$actiondata['clientids'][$clientid] = $actiondata['failstate']['clientids'][$clientid];
 				$actiondata['statusids'][$clientid] = $actiondata['failstate']['statusids'][$clientid];
 
-				ZLog::Write(LOGLEVEL_WARN, sprintf("Mobile loop detected! Incoming new message '%s' was created on the server before. Replying with known new server id: %s", $clientid, $actiondata['clientids'][$clientid]));
+				SLog::Write(LOGLEVEL_WARN, sprintf("Mobile loop detected! Incoming new message '%s' was created on the server before. Replying with known new server id: %s", $clientid, $actiondata['clientids'][$clientid]));
 			}
 
 			// message was REMOVED before, do NOT attempt to remove it again
@@ -1447,7 +1447,7 @@ class Sync extends RequestProcessor {
 				$actiondata['removeids'][$serverid] = $actiondata['failstate']['removeids'][$serverid];
 				$actiondata['statusids'][$serverid] = $actiondata['failstate']['statusids'][$serverid];
 
-				ZLog::Write(LOGLEVEL_WARN, sprintf("Mobile loop detected! Message '%s' was deleted by the mobile before. Replying with known status: %s", $clientid, $actiondata['statusids'][$serverid]));
+				SLog::Write(LOGLEVEL_WARN, sprintf("Mobile loop detected! Message '%s' was deleted by the mobile before. Replying with known status: %s", $clientid, $actiondata['statusids'][$serverid]));
 			}
 		}
 
@@ -1460,8 +1460,8 @@ class Sync extends RequestProcessor {
 						$actiondata['modifyids'][] = $serverid;
 
 						// ignore sms messages
-						if ($foldertype == 'SMS' || stripos($serverid, self::ZPUSHIGNORESMS) !== false) {
-							ZLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
+						if ($foldertype == 'SMS' || stripos($serverid, self::GSYNCIGNORESMS) !== false) {
+							SLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
 							// TODO we should update the SMS
 							$actiondata['statusids'][$serverid] = SYNC_STATUS_SUCCESS;
 						}
@@ -1499,10 +1499,10 @@ class Sync extends RequestProcessor {
 
 						// ignore sms messages
 						if ($foldertype == 'SMS') {
-							ZLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
+							SLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
 							// TODO we should create the SMS
 							// return a fake serverid which we can identify later
-							$actiondata['clientids'][$clientid] = self::ZPUSHIGNORESMS . $clientid;
+							$actiondata['clientids'][$clientid] = self::GSYNCIGNORESMS . $clientid;
 							$actiondata['statusids'][$clientid] = SYNC_STATUS_SUCCESS;
 						}
 						// check incoming message without logging WARN messages about errors
@@ -1526,8 +1526,8 @@ class Sync extends RequestProcessor {
 					try {
 						$actiondata['removeids'][] = $serverid;
 						// ignore sms messages
-						if ($foldertype == 'SMS' || stripos($serverid, self::ZPUSHIGNORESMS) !== false) {
-							ZLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
+						if ($foldertype == 'SMS' || stripos($serverid, self::GSYNCIGNORESMS) !== false) {
+							SLog::Write(LOGLEVEL_DEBUG, 'SMS sync are not supported. Ignoring message.');
 							// TODO we should delete the SMS
 							$actiondata['statusids'][$serverid] = SYNC_STATUS_SUCCESS;
 						} else {
@@ -1542,7 +1542,7 @@ class Sync extends RequestProcessor {
 									break;
 								}
 
-								ZLog::Write(LOGLEVEL_WARN, 'Message should be moved to WasteBasket, but the Backend did not return a destination ID. Message is hard deleted now!');
+								SLog::Write(LOGLEVEL_WARN, 'Message should be moved to WasteBasket, but the Backend did not return a destination ID. Message is hard deleted now!');
 							}
 
 							$this->importer->ImportMessageDeletion($serverid);
@@ -1556,7 +1556,7 @@ class Sync extends RequestProcessor {
 
 					break;
 			}
-			ZLog::Write(LOGLEVEL_DEBUG, 'Sync->importMessage(): message imported');
+			SLog::Write(LOGLEVEL_DEBUG, 'Sync->importMessage(): message imported');
 		}
 	}
 
@@ -1633,7 +1633,7 @@ class Sync extends RequestProcessor {
 		$timeout = time() + (($interval && $interval < $maxTimeout) ? $interval : $maxTimeout);
 		// randomize timeout in 12h
 		$timeout -= rand(0, 43200);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('Sync()->setFolderStat() on %s: %s expiring %s', $spa->getFolderId(), $newFolderStat, date('Y-m-d H:i:s', $timeout)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('Sync()->setFolderStat() on %s: %s expiring %s', $spa->getFolderId(), $newFolderStat, date('Y-m-d H:i:s', $timeout)));
 		$spa->SetFolderStatTimeout($timeout);
 	}
 }

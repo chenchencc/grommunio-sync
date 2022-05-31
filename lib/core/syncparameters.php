@@ -171,7 +171,7 @@ class SyncParameters extends StateObject {
 			unset($this->uuidNewCounter);
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncParameters->GetLatestSyncKey(): '%s'", $this->GetSyncKey()));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncParameters->GetLatestSyncKey(): '%s'", $this->GetSyncKey()));
 
 		return $this->GetSyncKey();
 	}
@@ -194,7 +194,7 @@ class SyncParameters extends StateObject {
 			unset($this->uuidNewCounter);
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, 'SyncParameters->RemoveSyncKey(): saved sync key removed');
+		SLog::Write(LOGLEVEL_DEBUG, 'SyncParameters->RemoveSyncKey(): saved sync key removed');
 
 		return true;
 	}
@@ -259,10 +259,10 @@ class SyncParameters extends StateObject {
 			$a = $this->contentParameters;
 			unset($a[self::DEFAULTOPTIONS]);
 			$this->contentParameters = $a;
-			ZLog::Write(LOGLEVEL_DEBUG, 'SyncParameters->UseCPO(): removed existing DEFAULT CPO as it is obsolete');
+			SLog::Write(LOGLEVEL_DEBUG, 'SyncParameters->UseCPO(): removed existing DEFAULT CPO as it is obsolete');
 		}
 
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("SyncParameters->UseCPO('%s')", $options));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("SyncParameters->UseCPO('%s')", $options));
 		$this->currentCPO = $options;
 		$this->checkCPO($this->currentCPO);
 	}
@@ -295,7 +295,7 @@ class SyncParameters extends StateObject {
 		}
 		if ($doLog) {
 			$expDate = ($this->HasFolderStatTimeout()) ? date('Y-m-d H:i:s', $this->GetFolderStatTimeout()) : 'not set';
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('SyncParameters->IsExporterRunRequired(): %s - current: %s - saved: %s - expiring: %s', Utils::PrintAsString($run), Utils::PrintAsString($currentFolderStat), Utils::PrintAsString($this->GetFolderStat()), $expDate));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('SyncParameters->IsExporterRunRequired(): %s - current: %s - saved: %s - expiring: %s', Utils::PrintAsString($run), Utils::PrintAsString($currentFolderStat), Utils::PrintAsString($this->GetFolderStat()), $expDate));
 		}
 
 		return $run;
@@ -379,7 +379,7 @@ class SyncParameters extends StateObject {
 		}
 		// something unexpected happened, just return default, empty in the worst case
 
-		ZLog::Write(LOGLEVEL_WARN, 'SyncParameters->normalizeType(): no DEFAULT CPO available, creating empty CPO');
+		SLog::Write(LOGLEVEL_WARN, 'SyncParameters->normalizeType(): no DEFAULT CPO available, creating empty CPO');
 		$this->checkCPO(self::DEFAULTOPTIONS);
 
 		return self::DEFAULTOPTIONS;

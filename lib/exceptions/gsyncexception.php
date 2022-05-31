@@ -7,7 +7,7 @@
  * Main grommunio-sync exception
  */
 
-class ZPushException extends Exception {
+class GSyncException extends Exception {
 	protected $defaultLogLevel = LOGLEVEL_FATAL;
 	protected $httpReturnCode = HTTP_CODE_500;
 	protected $httpReturnMessage = 'Internal Server Error';
@@ -24,7 +24,7 @@ class ZPushException extends Exception {
 		}
 
 		parent::__construct($message, (int) $code);
-		ZLog::Write($logLevel, get_class($this) . ': ' . $message . ' - code: ' . $code . ' - file: ' . $this->getFile() . ':' . $this->getLine(), false);
+		SLog::Write($logLevel, get_class($this) . ': ' . $message . ' - code: ' . $code . ' - file: ' . $this->getFile() . ':' . $this->getLine(), false);
 	}
 
 	public function getHTTPCodeString() {

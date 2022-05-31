@@ -186,12 +186,12 @@ class Utils {
 					break;
 			}
 			if (strlen($fileas) == 0) {
-				ZLog::Write(LOGLEVEL_DEBUG, 'Fileas is empty.');
+				SLog::Write(LOGLEVEL_DEBUG, 'Fileas is empty.');
 			}
 
 			return $fileas;
 		}
-		ZLog::Write(LOGLEVEL_DEBUG, 'FILEAS_ORDER not defined. Add it to your config.php.');
+		SLog::Write(LOGLEVEL_DEBUG, 'FILEAS_ORDER not defined. Add it to your config.php.');
 
 		return null;
 	}
@@ -488,53 +488,53 @@ class Utils {
 	 */
 	public static function GetCommandFromCode($code) {
 		switch ($code) {
-			case ZPush::COMMAND_SYNC:                 return 'Sync';
+			case GSync::COMMAND_SYNC:                 return 'Sync';
 
-			case ZPush::COMMAND_SENDMAIL:             return 'SendMail';
+			case GSync::COMMAND_SENDMAIL:             return 'SendMail';
 
-			case ZPush::COMMAND_SMARTFORWARD:         return 'SmartForward';
+			case GSync::COMMAND_SMARTFORWARD:         return 'SmartForward';
 
-			case ZPush::COMMAND_SMARTREPLY:           return 'SmartReply';
+			case GSync::COMMAND_SMARTREPLY:           return 'SmartReply';
 
-			case ZPush::COMMAND_GETATTACHMENT:        return 'GetAttachment';
+			case GSync::COMMAND_GETATTACHMENT:        return 'GetAttachment';
 
-			case ZPush::COMMAND_FOLDERSYNC:           return 'FolderSync';
+			case GSync::COMMAND_FOLDERSYNC:           return 'FolderSync';
 
-			case ZPush::COMMAND_FOLDERCREATE:         return 'FolderCreate';
+			case GSync::COMMAND_FOLDERCREATE:         return 'FolderCreate';
 
-			case ZPush::COMMAND_FOLDERDELETE:         return 'FolderDelete';
+			case GSync::COMMAND_FOLDERDELETE:         return 'FolderDelete';
 
-			case ZPush::COMMAND_FOLDERUPDATE:         return 'FolderUpdate';
+			case GSync::COMMAND_FOLDERUPDATE:         return 'FolderUpdate';
 
-			case ZPush::COMMAND_MOVEITEMS:            return 'MoveItems';
+			case GSync::COMMAND_MOVEITEMS:            return 'MoveItems';
 
-			case ZPush::COMMAND_GETITEMESTIMATE:      return 'GetItemEstimate';
+			case GSync::COMMAND_GETITEMESTIMATE:      return 'GetItemEstimate';
 
-			case ZPush::COMMAND_MEETINGRESPONSE:      return 'MeetingResponse';
+			case GSync::COMMAND_MEETINGRESPONSE:      return 'MeetingResponse';
 
-			case ZPush::COMMAND_SEARCH:               return 'Search';
+			case GSync::COMMAND_SEARCH:               return 'Search';
 
-			case ZPush::COMMAND_SETTINGS:             return 'Settings';
+			case GSync::COMMAND_SETTINGS:             return 'Settings';
 
-			case ZPush::COMMAND_PING:                 return 'Ping';
+			case GSync::COMMAND_PING:                 return 'Ping';
 
-			case ZPush::COMMAND_ITEMOPERATIONS:       return 'ItemOperations';
+			case GSync::COMMAND_ITEMOPERATIONS:       return 'ItemOperations';
 
-			case ZPush::COMMAND_PROVISION:            return 'Provision';
+			case GSync::COMMAND_PROVISION:            return 'Provision';
 
-			case ZPush::COMMAND_RESOLVERECIPIENTS:    return 'ResolveRecipients';
+			case GSync::COMMAND_RESOLVERECIPIENTS:    return 'ResolveRecipients';
 
-			case ZPush::COMMAND_VALIDATECERT:         return 'ValidateCert';
+			case GSync::COMMAND_VALIDATECERT:         return 'ValidateCert';
 			// Deprecated commands
-			case ZPush::COMMAND_GETHIERARCHY:         return 'GetHierarchy';
+			case GSync::COMMAND_GETHIERARCHY:         return 'GetHierarchy';
 
-			case ZPush::COMMAND_CREATECOLLECTION:     return 'CreateCollection';
+			case GSync::COMMAND_CREATECOLLECTION:     return 'CreateCollection';
 
-			case ZPush::COMMAND_DELETECOLLECTION:     return 'DeleteCollection';
+			case GSync::COMMAND_DELETECOLLECTION:     return 'DeleteCollection';
 
-			case ZPush::COMMAND_MOVECOLLECTION:       return 'MoveCollection';
+			case GSync::COMMAND_MOVECOLLECTION:       return 'MoveCollection';
 
-			case ZPush::COMMAND_NOTIFY:               return 'Notify';
+			case GSync::COMMAND_NOTIFY:               return 'Notify';
 		}
 
 		return false;
@@ -549,53 +549,53 @@ class Utils {
 	 */
 	public static function GetCodeFromCommand($command) {
 		switch ($command) {
-			case 'Sync':                 return ZPush::COMMAND_SYNC;
+			case 'Sync':                 return GSync::COMMAND_SYNC;
 
-			case 'SendMail':             return ZPush::COMMAND_SENDMAIL;
+			case 'SendMail':             return GSync::COMMAND_SENDMAIL;
 
-			case 'SmartForward':         return ZPush::COMMAND_SMARTFORWARD;
+			case 'SmartForward':         return GSync::COMMAND_SMARTFORWARD;
 
-			case 'SmartReply':           return ZPush::COMMAND_SMARTREPLY;
+			case 'SmartReply':           return GSync::COMMAND_SMARTREPLY;
 
-			case 'GetAttachment':        return ZPush::COMMAND_GETATTACHMENT;
+			case 'GetAttachment':        return GSync::COMMAND_GETATTACHMENT;
 
-			case 'FolderSync':           return ZPush::COMMAND_FOLDERSYNC;
+			case 'FolderSync':           return GSync::COMMAND_FOLDERSYNC;
 
-			case 'FolderCreate':         return ZPush::COMMAND_FOLDERCREATE;
+			case 'FolderCreate':         return GSync::COMMAND_FOLDERCREATE;
 
-			case 'FolderDelete':         return ZPush::COMMAND_FOLDERDELETE;
+			case 'FolderDelete':         return GSync::COMMAND_FOLDERDELETE;
 
-			case 'FolderUpdate':         return ZPush::COMMAND_FOLDERUPDATE;
+			case 'FolderUpdate':         return GSync::COMMAND_FOLDERUPDATE;
 
-			case 'MoveItems':            return ZPush::COMMAND_MOVEITEMS;
+			case 'MoveItems':            return GSync::COMMAND_MOVEITEMS;
 
-			case 'GetItemEstimate':      return ZPush::COMMAND_GETITEMESTIMATE;
+			case 'GetItemEstimate':      return GSync::COMMAND_GETITEMESTIMATE;
 
-			case 'MeetingResponse':      return ZPush::COMMAND_MEETINGRESPONSE;
+			case 'MeetingResponse':      return GSync::COMMAND_MEETINGRESPONSE;
 
-			case 'Search':               return ZPush::COMMAND_SEARCH;
+			case 'Search':               return GSync::COMMAND_SEARCH;
 
-			case 'Settings':             return ZPush::COMMAND_SETTINGS;
+			case 'Settings':             return GSync::COMMAND_SETTINGS;
 
-			case 'Ping':                 return ZPush::COMMAND_PING;
+			case 'Ping':                 return GSync::COMMAND_PING;
 
-			case 'ItemOperations':       return ZPush::COMMAND_ITEMOPERATIONS;
+			case 'ItemOperations':       return GSync::COMMAND_ITEMOPERATIONS;
 
-			case 'Provision':            return ZPush::COMMAND_PROVISION;
+			case 'Provision':            return GSync::COMMAND_PROVISION;
 
-			case 'ResolveRecipients':    return ZPush::COMMAND_RESOLVERECIPIENTS;
+			case 'ResolveRecipients':    return GSync::COMMAND_RESOLVERECIPIENTS;
 
-			case 'ValidateCert':         return ZPush::COMMAND_VALIDATECERT;
+			case 'ValidateCert':         return GSync::COMMAND_VALIDATECERT;
 			// Deprecated commands
-			case 'GetHierarchy':         return ZPush::COMMAND_GETHIERARCHY;
+			case 'GetHierarchy':         return GSync::COMMAND_GETHIERARCHY;
 
-			case 'CreateCollection':     return ZPush::COMMAND_CREATECOLLECTION;
+			case 'CreateCollection':     return GSync::COMMAND_CREATECOLLECTION;
 
-			case 'DeleteCollection':     return ZPush::COMMAND_DELETECOLLECTION;
+			case 'DeleteCollection':     return GSync::COMMAND_DELETECOLLECTION;
 
-			case 'MoveCollection':       return ZPush::COMMAND_MOVECOLLECTION;
+			case 'MoveCollection':       return GSync::COMMAND_MOVECOLLECTION;
 
-			case 'Notify':               return ZPush::COMMAND_NOTIFY;
+			case 'Notify':               return GSync::COMMAND_NOTIFY;
 		}
 
 		return false;
@@ -713,7 +713,7 @@ class Utils {
 			return iconv($charset, 'utf-8', $string);
 		}
 
-		ZLog::Write(LOGLEVEL_WARN, "Utils::ConvertCodepageStringToUtf8() 'iconv' is not available. Charset conversion skipped.");
+		SLog::Write(LOGLEVEL_WARN, "Utils::ConvertCodepageStringToUtf8() 'iconv' is not available. Charset conversion skipped.");
 
 		return $string;
 	}
@@ -740,7 +740,7 @@ class Utils {
 			return iconv($inCharset, $outCharset, $string);
 		}
 
-		ZLog::Write(LOGLEVEL_WARN, "Utils::ConvertCodepage() 'iconv' is not available. Charset conversion skipped.");
+		SLog::Write(LOGLEVEL_WARN, "Utils::ConvertCodepage() 'iconv' is not available. Charset conversion skipped.");
 
 		return $string;
 	}
@@ -783,7 +783,7 @@ class Utils {
 	 */
 	public static function FixFileOwner($file) {
 		if (!function_exists('posix_getuid')) {
-			ZLog::Write(LOGLEVEL_DEBUG, 'Utils::FixeFileOwner(): Posix subsystem not available, skipping.');
+			SLog::Write(LOGLEVEL_DEBUG, 'Utils::FixeFileOwner(): Posix subsystem not available, skipping.');
 
 			return false;
 		}
@@ -882,7 +882,7 @@ class Utils {
 			case DeviceManager::FLD_ORIGIN_IMPERSONATED:
 				return $origin;
 		}
-		ZLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFolderOriginFromId(): Unknown folder origin for folder with id '%s'", $folderid));
+		SLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFolderOriginFromId(): Unknown folder origin for folder with id '%s'", $folderid));
 
 		return false;
 	}
@@ -913,7 +913,7 @@ class Utils {
 			case DeviceManager::FLD_ORIGIN_IMPERSONATED:
 				return 'impersonated';
 		}
-		ZLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFolderOriginStringFromId(): Unknown folder origin for folder with id '%s'", $folderid));
+		SLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFolderOriginStringFromId(): Unknown folder origin for folder with id '%s'", $folderid));
 
 		return 'unknown';
 	}
@@ -955,7 +955,7 @@ class Utils {
 			case 'OOF':
 				return fbOutOfOffice;
 		}
-		ZLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFbStatusFromType(): Unknown free busy type '%s'", $fbType));
+		SLog::Write(LOGLEVEL_WARN, sprintf("Utils->GetFbStatusFromType(): Unknown free busy type '%s'", $fbType));
 
 		return fbNoData;
 	}

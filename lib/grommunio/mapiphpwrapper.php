@@ -43,7 +43,7 @@ class PHPWrapper {
 
 		if ($folderid) {
 			$folderidHex = bin2hex($folderid);
-			$folderid = ZPush::GetDeviceManager()->GetFolderIdForBackendId($folderidHex);
+			$folderid = GSync::GetDeviceManager()->GetFolderIdForBackendId($folderidHex);
 			if ($folderid != $folderidHex) {
 				$this->prefix = $folderid . ':';
 			}
@@ -101,17 +101,17 @@ class PHPWrapper {
 		$mapimessage = mapi_msgstore_openentry($this->store, $entryid);
 
 		try {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageChange(): Getting message from MAPIProvider, sourcekey: '%s', parentsourcekey: '%s', entryid: '%s'", bin2hex($sourcekey), bin2hex($parentsourcekey), bin2hex($entryid)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageChange(): Getting message from MAPIProvider, sourcekey: '%s', parentsourcekey: '%s', entryid: '%s'", bin2hex($sourcekey), bin2hex($parentsourcekey), bin2hex($entryid)));
 
 			$message = $this->mapiprovider->GetMessage($mapimessage, $this->contentparameters);
 
 			// strip or do not send private messages from shared folders to the device
 			if (MAPIUtils::IsMessageSharedAndPrivate($this->folderid, $mapimessage)) {
 				if ($message->SupportsPrivateStripping()) {
-					ZLog::Write(LOGLEVEL_DEBUG, 'PHPWrapper->ImportMessageChange(): stripping data of private message from a shared folder');
+					SLog::Write(LOGLEVEL_DEBUG, 'PHPWrapper->ImportMessageChange(): stripping data of private message from a shared folder');
 					$message->StripData(Streamer::STRIP_PRIVATE_DATA);
 				} else {
-					ZLog::Write(LOGLEVEL_DEBUG, 'PHPWrapper->ImportMessageChange(): ignoring private message from a shared folder');
+					SLog::Write(LOGLEVEL_DEBUG, 'PHPWrapper->ImportMessageChange(): ignoring private message from a shared folder');
 
 					return SYNC_E_IGNORE;
 				}
@@ -119,13 +119,13 @@ class PHPWrapper {
 		} catch (SyncObjectBrokenException $mbe) {
 			$brokenSO = $mbe->GetSyncObject();
 			if (!$brokenSO) {
-				ZLog::Write(LOGLEVEL_ERROR, sprintf('PHPWrapper->ImportMessageChange(): Caught SyncObjectBrokenException but broken SyncObject available'));
+				SLog::Write(LOGLEVEL_ERROR, sprintf('PHPWrapper->ImportMessageChange(): Caught SyncObjectBrokenException but broken SyncObject available'));
 			} else {
 				if (!isset($brokenSO->id)) {
 					$brokenSO->id = 'Unknown ID';
-					ZLog::Write(LOGLEVEL_ERROR, sprintf('PHPWrapper->ImportMessageChange(): Caught SyncObjectBrokenException but no ID of object set'));
+					SLog::Write(LOGLEVEL_ERROR, sprintf('PHPWrapper->ImportMessageChange(): Caught SyncObjectBrokenException but no ID of object set'));
 				}
-				ZPush::GetDeviceManager()->AnnounceIgnoredMessage(false, $brokenSO->id, $brokenSO);
+				GSync::GetDeviceManager()->AnnounceIgnoredMessage(false, $brokenSO->id, $brokenSO);
 			}
 			// tell MAPI to ignore the message
 			return SYNC_E_IGNORE;
@@ -139,7 +139,7 @@ class PHPWrapper {
 		}
 
 		$this->importer->ImportMessageChange($this->prefix . bin2hex($sourcekey), $message);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageChange(): change for: '%s'", $this->prefix . bin2hex($sourcekey)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageChange(): change for: '%s'", $this->prefix . bin2hex($sourcekey)));
 
 		// Tell MAPI it doesn't need to do anything itself, as we've done all the work already.
 		return SYNC_E_IGNORE;
@@ -155,12 +155,12 @@ class PHPWrapper {
 	 */
 	public function ImportMessageDeletion($flags, $sourcekeys) {
 		$amount = count($sourcekeys);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('PHPWrapper->ImportMessageDeletion(): Received %d remove requests from ICS', $amount));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('PHPWrapper->ImportMessageDeletion(): Received %d remove requests from ICS', $amount));
 
 		foreach ($sourcekeys as $sourcekey) {
 			// TODO if we would know that ICS is removing the message because it's outside the sync interval, we could send a $asSoftDelete = true to the importer. Could they pass that via $flags?
 			$this->importer->ImportMessageDeletion($this->prefix . bin2hex($sourcekey));
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageDeletion(): delete for :'%s'", $this->prefix . bin2hex($sourcekey)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportMessageDeletion(): delete for :'%s'", $this->prefix . bin2hex($sourcekey)));
 		}
 	}
 
@@ -174,7 +174,7 @@ class PHPWrapper {
 	public function ImportPerUserReadStateChange($readstates) {
 		foreach ($readstates as $readstate) {
 			$this->importer->ImportMessageReadFlag($this->prefix . bin2hex($readstate['sourcekey']), $readstate['flags'] & MSGFLAG_READ);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportPerUserReadStateChange(): read for :'%s'", $this->prefix . bin2hex($readstate['sourcekey'])));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("PHPWrapper->ImportPerUserReadStateChange(): read for :'%s'", $this->prefix . bin2hex($readstate['sourcekey'])));
 		}
 	}
 
@@ -224,7 +224,7 @@ class PHPWrapper {
 	 */
 	public function ImportFolderDeletion($flags, $sourcekeys) {
 		foreach ($sourcekeys as $sourcekey) {
-			$this->importer->ImportFolderDeletion(SyncFolder::GetObject(ZPush::GetDeviceManager()->GetFolderIdForBackendId(bin2hex($sourcekey))));
+			$this->importer->ImportFolderDeletion(SyncFolder::GetObject(GSync::GetDeviceManager()->GetFolderIdForBackendId(bin2hex($sourcekey))));
 		}
 
 		return 0;

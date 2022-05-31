@@ -83,7 +83,7 @@ class Streamer implements JsonSerializable {
 				// Found a start tag
 				if (!isset($this->mapping[$entity[EN_TAG]])) {
 					// This tag shouldn't be here, abort
-					ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("Tag '%s' unexpected in type XML type '%s'", $entity[EN_TAG], get_class($this)));
+					SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("Tag '%s' unexpected in type XML type '%s'", $entity[EN_TAG], get_class($this)));
 
 					return false;
 				}
@@ -174,7 +174,7 @@ class Streamer implements JsonSerializable {
 							$decoded = $subdecoder;
 
 							if (!$decoder->getElementEndTag()) {
-								ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("No end tag for '%s'", $entity[EN_TAG]));
+								SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("No end tag for '%s'", $entity[EN_TAG]));
 
 								return false;
 							}
@@ -190,7 +190,7 @@ class Streamer implements JsonSerializable {
 						}
 
 						if (!$decoder->getElementEndTag()) {
-							ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("Unable to get end tag for '%s'", $entity[EN_TAG]));
+							SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("Unable to get end tag for '%s'", $entity[EN_TAG]));
 
 							return false;
 						}
@@ -203,7 +203,7 @@ class Streamer implements JsonSerializable {
 
 				break;
 			} else {
-				ZLog::Write(LOGLEVEL_WBXMLSTACK, 'Unexpected content in type');
+				SLog::Write(LOGLEVEL_WBXMLSTACK, 'Unexpected content in type');
 
 				break;
 			}
@@ -232,7 +232,7 @@ class Streamer implements JsonSerializable {
 							$encoder->startTag($tag, false, true);
 						}
 					} else {
-						ZLog::Write(LOGLEVEL_ERROR, sprintf("Streamer->Encode(): parameter '%s' of object %s is not of type Streamer", $map[self::STREAMER_VAR], get_class($this)));
+						SLog::Write(LOGLEVEL_ERROR, sprintf("Streamer->Encode(): parameter '%s' of object %s is not of type Streamer", $map[self::STREAMER_VAR], get_class($this)));
 					}
 				}
 				// Array of objects
@@ -408,7 +408,7 @@ class Streamer implements JsonSerializable {
 	public function jsonDeserialize($stdObj) {
 		foreach ($stdObj->data as $k => $v) {
 			if (is_object($v) && isset($v->gsSyncStateClass)) {
-				ZLog::Write(LOGLEVEL_DEBUG, sprintf("Streamer->jsonDeserialize(): top class '%s'", $v->gsSyncStateClass));
+				SLog::Write(LOGLEVEL_DEBUG, sprintf("Streamer->jsonDeserialize(): top class '%s'", $v->gsSyncStateClass));
 				$this->{$k} = new $v->gsSyncStateClass();
 				$this->{$k}->jsonDeserialize($v);
 			} else {

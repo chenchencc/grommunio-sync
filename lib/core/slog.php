@@ -7,7 +7,7 @@
  * Debug and logging
  */
 
-class ZLog {
+class SLog {
 	private static $wbxmlDebug = '';
 	private static $lastLogs = [];
 
@@ -151,7 +151,7 @@ class ZLog {
  */
 
 // TODO review error handler
-function zpush_error_handler($errno, $errstr, $errfile, $errline) {
+function gsync_error_handler($errno, $errstr, $errfile, $errline) {
 	if (defined('LOG_ERROR_MASK')) {
 		$errno &= LOG_ERROR_MASK;
 	}
@@ -171,13 +171,13 @@ function zpush_error_handler($errno, $errstr, $errfile, $errline) {
 			if (stripos($errfile, 'interprocessdata') !== false && stripos($errstr, 'shm_get_var()') !== false) {
 				break;
 			}
-			ZLog::Write(LOGLEVEL_WARN, "{$errfile}:{$errline} {$errstr} ({$errno})");
+			SLog::Write(LOGLEVEL_WARN, "{$errfile}:{$errline} {$errstr} ({$errno})");
 
 			break;
 
 		default:
 			$bt = debug_backtrace();
-			ZLog::Write(LOGLEVEL_ERROR, "trace error: {$errfile}:{$errline} {$errstr} ({$errno}) - backtrace: " . (count($bt) - 1) . ' steps');
+			SLog::Write(LOGLEVEL_ERROR, "trace error: {$errfile}:{$errline} {$errstr} ({$errno}) - backtrace: " . (count($bt) - 1) . ' steps');
 			for ($i = 1, $bt_length = count($bt); $i < $bt_length; ++$i) {
 				$file = $line = 'unknown';
 				if (isset($bt[$i]['file'])) {
@@ -186,7 +186,7 @@ function zpush_error_handler($errno, $errstr, $errfile, $errline) {
 				if (isset($bt[$i]['line'])) {
 					$line = $bt[$i]['line'];
 				}
-				ZLog::Write(LOGLEVEL_ERROR, "trace: {$i}:" . $file . ':' . $line . ' - ' . ((isset($bt[$i]['class'])) ? $bt[$i]['class'] . $bt[$i]['type'] : '') . $bt[$i]['function'] . '()');
+				SLog::Write(LOGLEVEL_ERROR, "trace: {$i}:" . $file . ':' . $line . ' - ' . ((isset($bt[$i]['class'])) ? $bt[$i]['class'] . $bt[$i]['type'] : '') . $bt[$i]['function'] . '()');
 			}
 			// throw new Exception("An error occurred.");
 			break;
@@ -194,9 +194,9 @@ function zpush_error_handler($errno, $errstr, $errfile, $errline) {
 }
 
 error_reporting(E_ALL);
-set_error_handler('zpush_error_handler');
+set_error_handler('gsync_error_handler');
 
-function zpush_fatal_handler() {
+function gsync_fatal_handler() {
 	$errfile = 'unknown file';
 	$errstr = 'shutdown';
 	$errno = E_CORE_ERROR;
@@ -212,8 +212,8 @@ function zpush_fatal_handler() {
 
 		// do NOT log PHP Notice, Warning, Deprecated or Strict as FATAL
 		if ($errno & ~(E_NOTICE | E_WARNING | E_DEPRECATED | E_STRICT)) {
-			ZLog::Write(LOGLEVEL_FATAL, sprintf('Fatal error: %s:%d - %s (%s)', $errfile, $errline, $errstr, $errno));
+			SLog::Write(LOGLEVEL_FATAL, sprintf('Fatal error: %s:%d - %s (%s)', $errfile, $errline, $errstr, $errno));
 		}
 	}
 }
-register_shutdown_function('zpush_fatal_handler');
+register_shutdown_function('gsync_fatal_handler');

@@ -70,7 +70,7 @@ class WBXMLDecoder extends WBXMLDefs {
 	 * @param stream $input the incoming data stream
 	 */
 	public function __construct($input) {
-		$this->log = ZLog::IsWbxmlDebugEnabled();
+		$this->log = SLog::IsWbxmlDebugEnabled();
 
 		$this->in = $input;
 
@@ -165,7 +165,7 @@ class WBXMLDecoder extends WBXMLDefs {
 			return $element;
 		}
 
-		ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementStartTag(): unmatched WBXML tag: '%s' matching '%s' type '%s' flags '%s'", $tag, ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
+		SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementStartTag(): unmatched WBXML tag: '%s' matching '%s' type '%s' flags '%s'", $tag, ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
 		$this->ungetElement($element);
 
 		return false;
@@ -183,10 +183,10 @@ class WBXMLDecoder extends WBXMLDefs {
 			return $element;
 		}
 
-		ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementEndTag(): unmatched WBXML tag: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
+		SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementEndTag(): unmatched WBXML tag: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
 
 		$bt = debug_backtrace();
-		ZLog::Write(LOGLEVEL_ERROR, sprintf("WBXMLDecoder->getElementEndTag(): could not read end tag in '%s'. Please enable the LOGLEVEL_WBXML and send the log to the grommunio-sync dev team.", $bt[0]['file'] . ':' . $bt[0]['line']));
+		SLog::Write(LOGLEVEL_ERROR, sprintf("WBXMLDecoder->getElementEndTag(): could not read end tag in '%s'. Please enable the LOGLEVEL_WBXML and send the log to the grommunio-sync dev team.", $bt[0]['file'] . ':' . $bt[0]['line']));
 
 		// log the remaining wbxml content
 		$this->ungetElement($element);
@@ -207,7 +207,7 @@ class WBXMLDecoder extends WBXMLDefs {
 			return $element[EN_CONTENT];
 		}
 
-		ZLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementContent(): unmatched WBXML content: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
+		SLog::Write(LOGLEVEL_WBXMLSTACK, sprintf("WBXMLDecoder->getElementContent(): unmatched WBXML content: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
 		$this->ungetElement($element);
 
 		return false;
@@ -222,7 +222,7 @@ class WBXMLDecoder extends WBXMLDefs {
 	 */
 	public function ungetElement($element) {
 		if ($this->ungetbuffer) {
-			ZLog::Write(LOGLEVEL_ERROR, sprintf("WBXMLDecoder->ungetElement(): WBXML double unget on tag: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
+			SLog::Write(LOGLEVEL_ERROR, sprintf("WBXMLDecoder->ungetElement(): WBXML double unget on tag: '%s' type '%s' flags '%s'", ((isset($element[EN_TAG])) ? $element[EN_TAG] : ''), ((isset($element[EN_TYPE])) ? $element[EN_TYPE] : ''), ((isset($element[EN_FLAGS])) ? $element[EN_FLAGS] : '')));
 		}
 
 		$this->ungetbuffer = $element;
@@ -250,7 +250,7 @@ class WBXMLDecoder extends WBXMLDefs {
 	 * Reads the remaining data from the input stream.
 	 */
 	public function readRemainingData() {
-		ZLog::Write(LOGLEVEL_DEBUG, 'WBXMLDecoder->readRemainingData() reading remaining data from input stream');
+		SLog::Write(LOGLEVEL_DEBUG, 'WBXMLDecoder->readRemainingData() reading remaining data from input stream');
 		while ($this->getElement());
 	}
 
@@ -281,7 +281,7 @@ class WBXMLDecoder extends WBXMLDefs {
 	}
 
 	/**
-	 * Log the a token to ZLog.
+	 * Log the a token to SLog.
 	 *
 	 * @param string $el token
 	 *
@@ -293,17 +293,17 @@ class WBXMLDecoder extends WBXMLDefs {
 		switch ($el[EN_TYPE]) {
 			case EN_TYPE_STARTTAG:
 				if ($el[EN_FLAGS] & EN_FLAGS_CONTENT) {
-					ZLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' <' . $el[EN_TAG] . '>');
+					SLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' <' . $el[EN_TAG] . '>');
 					array_push($this->logStack, $el[EN_TAG]);
 				} else {
-					ZLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' <' . $el[EN_TAG] . '/>');
+					SLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' <' . $el[EN_TAG] . '/>');
 				}
 
 				break;
 
 			case EN_TYPE_ENDTAG:
 				$tag = array_pop($this->logStack);
-				ZLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . '</' . $tag . '>');
+				SLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . '</' . $tag . '>');
 
 				break;
 
@@ -318,7 +318,7 @@ class WBXMLDecoder extends WBXMLDefs {
 					$content = $el[EN_CONTENT];
 				}
 				// Log but make sure it's not truncated again (will be slightly bigger than 10KB)
-				ZLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' ' . $content, false);
+				SLog::Write(LOGLEVEL_WBXML, 'I ' . $spaces . ' ' . $content, false);
 
 				break;
 		}

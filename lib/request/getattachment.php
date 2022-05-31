@@ -24,7 +24,7 @@ class GetAttachment extends RequestProcessor {
 		try {
 			$attachment = self::$backend->GetAttachmentData($attname);
 			$stream = $attachment->data;
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleGetAttachment(): attachment stream from backend: %s', $stream));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleGetAttachment(): attachment stream from backend: %s', $stream));
 
 			// need to check for a resource here, as eg. feof('Error') === false and causing infinite loop in while!
 			if (!is_resource($stream)) {
@@ -39,7 +39,7 @@ class GetAttachment extends RequestProcessor {
 				throw new FatalException('HandleGetAttachment(): fpassthru === false !!!');
 			}
 			self::$topCollector->AnnounceInformation(sprintf('Streamed %d KB attachment', round($l / 1024)), true);
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('HandleGetAttachment(): attachment with %d KB sent to mobile', round($l / 1024)));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('HandleGetAttachment(): attachment with %d KB sent to mobile', round($l / 1024)));
 		} catch (StatusException $s) {
 			// StatusException already logged so we just need to pass it upwards to send a HTTP error
 			throw new HTTPReturnCodeException($s->getMessage(), HTTP_CODE_500, null, LOGLEVEL_DEBUG);

@@ -35,10 +35,10 @@ abstract class InterProcessData {
 			// ZP-987: use an own mutex + storage key for each device on non-shared-memory IPC
 			// this method is not suitable for the TopCollector atm
 			$type = Request::GetDeviceID();
-			$this->ipcProvider = ZPush::GetRedis();
+			$this->ipcProvider = GSync::GetRedis();
 		} catch (Exception $e) {
 			// ipcProvider could not initialise
-			ZLog::Write(LOGLEVEL_ERROR, sprintf('%s could not initialise IPC Redis provider: %s', get_class($this), $e->getMessage()));
+			SLog::Write(LOGLEVEL_ERROR, sprintf('%s could not initialise IPC Redis provider: %s', get_class($this), $e->getMessage()));
 		}
 	}
 
@@ -225,7 +225,7 @@ abstract class InterProcessData {
 					// TODO: make this configurable?
 					// retry in 0.1s
 					usleep(100000);
-					ZLog::Write(LOG_DEBUG, 'InterProcessData: setDeviceUserData CAS failed, retrying...');
+					SLog::Write(LOG_DEBUG, 'InterProcessData: setDeviceUserData CAS failed, retrying...');
 				}
 			}
 		}

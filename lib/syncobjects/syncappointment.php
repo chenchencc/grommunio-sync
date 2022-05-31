@@ -228,19 +228,19 @@ class SyncAppointment extends SyncObject {
 			// Check error cases first
 			// Case 2: starttime not set, endtime in the past
 			if (!isset($this->starttime) && isset($this->endtime) && $this->endtime < $time) {
-				ZLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' not set while 'endtime' is in the past (case 2). Aborting.");
+				SLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' not set while 'endtime' is in the past (case 2). Aborting.");
 
 				return false;
 			}
 			// Case 3b: starttime not set, endtime in the future (3) but before the calculated starttime (3b)
 			if (!isset($this->starttime) && isset($this->endtime) && $this->endtime > $time && $this->endtime < $calcstart) {
-				ZLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' not set while 'endtime' is in the future but before the calculated starttime (case 3b). Aborting.");
+				SLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' not set while 'endtime' is in the future but before the calculated starttime (case 3b). Aborting.");
 
 				return false;
 			}
 			// Case 5: starttime in the future but no endtime set
 			if (isset($this->starttime) && $this->starttime > $time && !isset($this->endtime)) {
-				ZLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' is in the future but 'endtime' is not set (case 5). Aborting.");
+				SLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'starttime' is in the future but 'endtime' is not set (case 5). Aborting.");
 
 				return false;
 			}
@@ -249,12 +249,12 @@ class SyncAppointment extends SyncObject {
 			// Case 1, 3a (endtime won't be changed as it's set)
 			if (!isset($this->starttime)) {
 				$this->starttime = $calcstart;
-				ZLog::Write(LOGLEVEL_WBXML, sprintf("SyncAppointment->Check(): Parameter 'starttime' was not set, setting it to %d (%s).", $this->starttime, gmstrftime('%Y%m%dT%H%M%SZ', $this->starttime)));
+				SLog::Write(LOGLEVEL_WBXML, sprintf("SyncAppointment->Check(): Parameter 'starttime' was not set, setting it to %d (%s).", $this->starttime, gmstrftime('%Y%m%dT%H%M%SZ', $this->starttime)));
 			}
 			// Case 1, 4
 			if (!isset($this->endtime)) {
 				$this->endtime = $calcstart + 1800; // 30 min after calcstart
-				ZLog::Write(LOGLEVEL_WBXML, sprintf("SyncAppointment->Check(): Parameter 'endtime' was not set, setting it to %d (%s).", $this->endtime, gmstrftime('%Y%m%dT%H%M%SZ', $this->endtime)));
+				SLog::Write(LOGLEVEL_WBXML, sprintf("SyncAppointment->Check(): Parameter 'endtime' was not set, setting it to %d (%s).", $this->endtime, gmstrftime('%Y%m%dT%H%M%SZ', $this->endtime)));
 			}
 		}
 
@@ -271,13 +271,13 @@ class SyncAppointment extends SyncObject {
 
 		if ($this->meetingstatus > 0) {
 			if (!isset($this->organizername) || !isset($this->organizeremail)) {
-				ZLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'organizername' and 'organizeremail' should be set for a meeting request");
+				SLog::Write(LOGLEVEL_WARN, "SyncAppointment->Check(): Parameter 'organizername' and 'organizeremail' should be set for a meeting request");
 			}
 		}
 
 		// do not sync a recurrent appointment without a timezone (except all day events)
 		if (isset($this->recurrence) && !isset($this->timezone) && empty($this->alldayevent)) {
-			ZLog::Write(LOGLEVEL_ERROR, 'SyncAppointment->Check(): timezone for a recurring appointment is not set.');
+			SLog::Write(LOGLEVEL_ERROR, 'SyncAppointment->Check(): timezone for a recurring appointment is not set.');
 
 			return false;
 		}

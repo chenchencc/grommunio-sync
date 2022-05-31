@@ -22,9 +22,9 @@ class SendMail extends RequestProcessor {
 		if (Request::GetGETCollectionId()) {
 			$parent = Request::GetGETCollectionId();
 		}
-		if ($commandCode == ZPush::COMMAND_SMARTFORWARD) {
+		if ($commandCode == GSync::COMMAND_SMARTFORWARD) {
 			$forward = Request::GetGETItemId();
-		} elseif ($commandCode == ZPush::COMMAND_SMARTREPLY) {
+		} elseif ($commandCode == GSync::COMMAND_SMARTREPLY) {
 			$reply = Request::GetGETItemId();
 		}
 
@@ -93,7 +93,7 @@ class SendMail extends RequestProcessor {
 			}
 
 			if (!isset($sm->source->folderid) || !$sm->source->folderid) {
-				ZLog::Write(LOGLEVEL_ERROR, sprintf("SendMail(): No parent folder id while replying or forwarding message:'%s'", (($reply) ? $reply : $forward)));
+				SLog::Write(LOGLEVEL_ERROR, sprintf("SendMail(): No parent folder id while replying or forwarding message:'%s'", (($reply) ? $reply : $forward)));
 			}
 		}
 

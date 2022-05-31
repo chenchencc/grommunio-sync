@@ -73,7 +73,7 @@ class MoveItems extends RequestProcessor {
 				$sourceBackendFolderId = self::$deviceManager->GetBackendIdForFolderId($move['srcfldid']);
 
 				// if the source folder is an additional folder the backend has to be setup correctly
-				if (!self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore($sourceBackendFolderId))) {
+				if (!self::$backend->Setup(GSync::GetAdditionalSyncFolderStore($sourceBackendFolderId))) {
 					throw new StatusException(sprintf('HandleMoveItems() could not Setup() the backend for folder id %s/%s', $move['srcfldid'], $sourceBackendFolderId), SYNC_MOVEITEMSSTATUS_INVALIDSOURCEID);
 				}
 

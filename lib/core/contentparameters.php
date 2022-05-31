@@ -111,7 +111,7 @@ class ContentParameters extends StateObject {
 	 */
 	public function GetBodyPreference() {
 		if (!isset($this->bodypref) || !(is_array($this->bodypref) || empty($this->bodypref))) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('ContentParameters->GetBodyPreference(): bodypref is empty or not set'));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('ContentParameters->GetBodyPreference(): bodypref is empty or not set'));
 
 			return false;
 		}
@@ -126,7 +126,7 @@ class ContentParameters extends StateObject {
 	 */
 	public function GetBodyPartPreference() {
 		if (!isset($this->bodypartpref) || !(is_array($this->bodypartpref) || empty($this->bodypartpref))) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf('ContentParameters->GetBodyPartPreference(): bodypartpref is empty or not set'));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf('ContentParameters->GetBodyPartPreference(): bodypartpref is empty or not set'));
 
 			return false;
 		}

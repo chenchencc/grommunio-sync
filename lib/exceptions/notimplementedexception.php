@@ -7,6 +7,6 @@
  * Exception indicating that that some code is not
  * available which is non-fatal.
  */
-class NotImplementedException extends ZPushException {
+class NotImplementedException extends GSyncException {
 	protected $defaultLogLevel = LOGLEVEL_ERROR;
 }

@@ -145,7 +145,7 @@ class SyncTaskRecurrence extends SyncObject {
 		}
 
 		if (isset($this->start, $this->until) && $this->until < $this->start) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'start' is HIGHER than 'until'. Check failed!", get_class($this)));
+			SLog::Write(LOGLEVEL_WARN, sprintf("SyncObject->Check(): Unmet condition in object from type %s: parameter 'start' is HIGHER than 'until'. Check failed!", get_class($this)));
 
 			return false;
 		}

@@ -42,7 +42,7 @@ class StringStreamWrapper {
 		$this->truncateHtmlSafe = (isset($contextOptions[self::PROTOCOL]['truncatehtmlsafe'])) ? $contextOptions[self::PROTOCOL]['truncatehtmlsafe'] : false;
 
 		$this->stringlength = strlen($this->stringstream);
-		ZLog::Write(LOGLEVEL_DEBUG, sprintf('StringStreamWrapper::stream_open(): initialized stream length: %d - HTML-safe-truncate: %s', $this->stringlength, Utils::PrintAsString($this->truncateHtmlSafe)));
+		SLog::Write(LOGLEVEL_DEBUG, sprintf('StringStreamWrapper::stream_open(): initialized stream length: %d - HTML-safe-truncate: %s', $this->stringlength, Utils::PrintAsString($this->truncateHtmlSafe)));
 
 		return true;
 	}
@@ -127,7 +127,7 @@ class StringStreamWrapper {
 		$this->stringlength = strlen($this->stringstream);
 
 		if ($this->position > $this->stringlength) {
-			ZLog::Write(LOGLEVEL_WARN, sprintf('StringStreamWrapper->stream_truncate(): stream position (%d) ahead of new size of %d. Repositioning pointer to end of stream.', $this->position, $this->stringlength));
+			SLog::Write(LOGLEVEL_WARN, sprintf('StringStreamWrapper->stream_truncate(): stream position (%d) ahead of new size of %d. Repositioning pointer to end of stream.', $this->position, $this->stringlength));
 			$this->position = $this->stringlength;
 		}
 

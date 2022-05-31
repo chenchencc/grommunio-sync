@@ -107,7 +107,7 @@ class FolderChange extends RequestProcessor {
 			$changesMem = self::$deviceManager->GetHierarchyChangesWrapper();
 
 			// the hierarchyCache should now fully be initialized - check for changes in the additional folders
-			$changesMem->Config(ZPush::GetAdditionalSyncFolders(false));
+			$changesMem->Config(GSync::GetAdditionalSyncFolders(false));
 
 			// reset to default store in backend
 			self::$backend->Setup(false);
@@ -118,14 +118,14 @@ class FolderChange extends RequestProcessor {
 			}
 
 			// any additional folders can not be modified - with exception if they are of type SYNC_FOLDER_TYPE_UNKNOWN (ZP-907)
-			if (self::$deviceManager->GetFolderTypeFromCacheById($serverid) != SYNC_FOLDER_TYPE_UNKNOWN && $serverid !== false && ZPush::GetAdditionalSyncFolderStore($backendid)) {
+			if (self::$deviceManager->GetFolderTypeFromCacheById($serverid) != SYNC_FOLDER_TYPE_UNKNOWN && $serverid !== false && GSync::GetAdditionalSyncFolderStore($backendid)) {
 				throw new StatusException('HandleFolderChange() can not change additional folders which are configured', SYNC_FSSTATUS_SYSTEMFOLDER);
 			}
 
 			// switch user store if this this happens inside an additional folder
 			// if this is an additional folder the backend has to be setup correctly
 			// backend should also not be switched when type is SYNC_FOLDER_TYPE_UNKNOWN (ZP-1220)
-			if (self::$deviceManager->GetFolderTypeFromCacheById($serverid) != SYNC_FOLDER_TYPE_UNKNOWN && !self::$backend->Setup(ZPush::GetAdditionalSyncFolderStore((($parentBackendId != false) ? $parentBackendId : $backendid)))) {
+			if (self::$deviceManager->GetFolderTypeFromCacheById($serverid) != SYNC_FOLDER_TYPE_UNKNOWN && !self::$backend->Setup(GSync::GetAdditionalSyncFolderStore((($parentBackendId != false) ? $parentBackendId : $backendid)))) {
 				throw new StatusException(sprintf("HandleFolderChange() could not Setup() the backend for folder id '%s'", (($parentBackendId != false) ? $parentBackendId : $backendid)), SYNC_FSSTATUS_SERVERERROR);
 			}
 		} catch (StateNotFoundException $snfex) {

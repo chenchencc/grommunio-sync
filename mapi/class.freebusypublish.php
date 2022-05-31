@@ -242,7 +242,7 @@ class FreeBusyPublish {
 		} catch (MAPIException $e) {
 			if ($e->getCode() == MAPI_E_NOT_FOUND) {
 				$e->setHandled();
-				ZLog::Write(LOGLEVEL_WARN, 'Error in opening freebusysupport object.');
+				SLog::Write(LOGLEVEL_WARN, 'Error in opening freebusysupport object.');
 			}
 		}
 
@@ -260,7 +260,7 @@ class FreeBusyPublish {
 			// We're finished
 			mapi_freebusysupport_close($fbsupport);
 		} else {
-			ZLog::Write(LOGLEVEL_WARN, 'FreeBusyPublish is not available');
+			SLog::Write(LOGLEVEL_WARN, 'FreeBusyPublish is not available');
 		}
 	}
 

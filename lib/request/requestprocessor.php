@@ -42,10 +42,10 @@ abstract class RequestProcessor {
 		}
 
 		if (Request::GetImpersonatedUser() && strcasecmp(Request::GetAuthUser(), Request::GetImpersonatedUser()) !== 0) {
-			ZLog::Write(LOGLEVEL_DEBUG, sprintf("RequestProcessor->Authenticate(): Impersonation active - authenticating: '%s' - impersonating '%s'", Request::GetAuthUser(), Request::GetImpersonatedUser()));
+			SLog::Write(LOGLEVEL_DEBUG, sprintf("RequestProcessor->Authenticate(): Impersonation active - authenticating: '%s' - impersonating '%s'", Request::GetAuthUser(), Request::GetImpersonatedUser()));
 		}
 
-		$backend = ZPush::GetBackend();
+		$backend = GSync::GetBackend();
 		if ($backend->Logon(Request::GetAuthUser(), Request::GetAuthDomain(), Request::GetAuthPassword()) == false) {
 			throw new AuthenticationRequiredException('Access denied. Username or password incorrect');
 		}
@@ -73,11 +73,11 @@ abstract class RequestProcessor {
 	 * @return
 	 */
 	public static function Initialize() {
-		self::$backend = ZPush::GetBackend();
-		self::$deviceManager = ZPush::GetDeviceManager(false);
-		self::$topCollector = ZPush::GetTopCollector();
+		self::$backend = GSync::GetBackend();
+		self::$deviceManager = GSync::GetDeviceManager(false);
+		self::$topCollector = GSync::GetTopCollector();
 
-		if (!ZPush::CommandNeedsPlainInput(Request::GetCommandCode())) {
+		if (!GSync::CommandNeedsPlainInput(Request::GetCommandCode())) {
 			self::$decoder = new WBXMLDecoder(Request::GetInputStream());
 		}
 
@@ -91,7 +91,7 @@ abstract class RequestProcessor {
 	 * @return bool
 	 */
 	public static function HandleRequest() {
-		$handler = ZPush::GetRequestHandlerForCommand(Request::GetCommandCode());
+		$handler = GSync::GetRequestHandlerForCommand(Request::GetCommandCode());
 
 		// if there is an error decoding wbxml, consume remaining data and include it in the WBXMLException
 		try {
@@ -100,15 +100,15 @@ abstract class RequestProcessor {
 			}
 		} catch (Exception $ex) {
 			// Log 10 KB of the WBXML data
-			ZLog::Write(LOGLEVEL_FATAL, 'WBXML 10K debug data: ' . Request::GetInputAsBase64(10240), false);
+			SLog::Write(LOGLEVEL_FATAL, 'WBXML 10K debug data: ' . Request::GetInputAsBase64(10240), false);
 
 			throw $ex;
 		}
 
 		// also log WBXML in happy case
-		if (ZLog::IsWbxmlDebugEnabled()) {
+		if (SLog::IsWbxmlDebugEnabled()) {
 			// Log 4 KB in the happy case
-			ZLog::Write(LOGLEVEL_WBXML, 'WBXML-IN : ' . Request::GetInputAsBase64(4096), false);
+			SLog::Write(LOGLEVEL_WBXML, 'WBXML-IN : ' . Request::GetInputAsBase64(4096), false);
 		}
 
 		return true;

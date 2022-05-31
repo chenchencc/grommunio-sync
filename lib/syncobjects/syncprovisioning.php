@@ -210,12 +210,12 @@ class SyncProvisioning extends SyncObject {
 		$streamerVars = $this->GetStreamerVars();
 		foreach ($policies as $p => $v) {
 			if (!in_array($p, $streamerVars)) {
-				ZLog::Write(LOGLEVEL_INFO, sprintf("Policy '%s' not supported by the device, ignoring", $p));
+				SLog::Write(LOGLEVEL_INFO, sprintf("Policy '%s' not supported by the device, ignoring", $p));
 
 				continue;
 			}
 			if ($logPolicies) {
-				ZLog::Write(LOGLEVEL_WBXML, sprintf("Policy '%s' enforced with: %s (%s)", $p, (is_array($v)) ? Utils::PrintAsString(implode(',', $v)) : Utils::PrintAsString($v), gettype($v)));
+				SLog::Write(LOGLEVEL_WBXML, sprintf("Policy '%s' enforced with: %s (%s)", $p, (is_array($v)) ? Utils::PrintAsString(implode(',', $v)) : Utils::PrintAsString($v), gettype($v)));
 			}
 			$this->{$p} = (is_array($v) && empty($v)) ? [] : $v;
 		}
