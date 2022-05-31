@@ -5,3 +5,9 @@ php composer.phar dump-autoload -o
 
 
 zypper in php7-redis
+
+To apply the code style guidelines of this repository, use php-cs-fixer:
+
+mkdir -p tools/php-cs-fixer
+composer require --working-dir=tools/php-cs-fixer friendsofphp/php-cs-fixer
+tools/php-cs-fixer/vendor/friendsofphp/php-cs-fixer/php-cs-fixer --config=.phpcs fix .
