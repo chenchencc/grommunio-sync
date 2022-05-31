@@ -8,5 +8,5 @@
  * available which is non-fatal.
  */
 class NotImplementedException extends ZPushException {
-    protected $defaultLogLevel = LOGLEVEL_ERROR;
+	protected $defaultLogLevel = LOGLEVEL_ERROR;
 }

@@ -8,32 +8,34 @@
  */
 
 class ZPushException extends Exception {
-    protected $defaultLogLevel = LOGLEVEL_FATAL;
-    protected $httpReturnCode = HTTP_CODE_500;
-    protected $httpReturnMessage = "Internal Server Error";
-    protected $httpHeaders = array();
-    protected $showLegal = true;
+	protected $defaultLogLevel = LOGLEVEL_FATAL;
+	protected $httpReturnCode = HTTP_CODE_500;
+	protected $httpReturnMessage = 'Internal Server Error';
+	protected $httpHeaders = [];
+	protected $showLegal = true;
 
-    public function __construct($message = "", $code = 0, $previous = NULL, $logLevel = false) {
-        if (! $message)
-            $message = $this->httpReturnMessage;
+	public function __construct($message = '', $code = 0, $previous = null, $logLevel = false) {
+		if (!$message) {
+			$message = $this->httpReturnMessage;
+		}
 
-        if (!$logLevel)
-            $logLevel = $this->defaultLogLevel;
+		if (!$logLevel) {
+			$logLevel = $this->defaultLogLevel;
+		}
 
-        parent::__construct($message, (int) $code);
-        ZLog::Write($logLevel, get_class($this) .': '. $message . ' - code: '.$code. ' - file: '. $this->getFile().':'.$this->getLine(), false);
-    }
+		parent::__construct($message, (int) $code);
+		ZLog::Write($logLevel, get_class($this) . ': ' . $message . ' - code: ' . $code . ' - file: ' . $this->getFile() . ':' . $this->getLine(), false);
+	}
 
-    public function getHTTPCodeString() {
-        return $this->httpReturnCode . " ". $this->httpReturnMessage;
-    }
+	public function getHTTPCodeString() {
+		return $this->httpReturnCode . ' ' . $this->httpReturnMessage;
+	}
 
-    public function getHTTPHeaders() {
-        return $this->httpHeaders;
-    }
+	public function getHTTPHeaders() {
+		return $this->httpHeaders;
+	}
 
-    public function showLegalNotice() {
-        return $this->showLegal;
-    }
+	public function showLegalNotice() {
+		return $this->showLegal;
+	}
 }

@@ -7,5 +7,5 @@
  * Main exception related to errors regarding synchronization
  */
 class StatusException extends ZPushException {
-    protected $defaultLogLevel = LOGLEVEL_INFO;
+	protected $defaultLogLevel = LOGLEVEL_INFO;
 }

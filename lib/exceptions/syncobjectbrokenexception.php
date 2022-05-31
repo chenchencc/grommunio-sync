@@ -9,29 +9,28 @@
  */
 
 class SyncObjectBrokenException extends ZPushException {
-    protected $defaultLogLevel = LOGLEVEL_WARN;
-    private $syncObject;
+	protected $defaultLogLevel = LOGLEVEL_WARN;
+	private $syncObject;
 
-    /**
-     * Returns the SyncObject which caused this Exception (if set)
-     *
-     * @access public
-     * @return SyncObject
-     */
-    public function GetSyncObject() {
-        return isset($this->syncObject) ? $this->syncObject : false;
-    }
+	/**
+	 * Returns the SyncObject which caused this Exception (if set).
+	 *
+	 * @return SyncObject
+	 */
+	public function GetSyncObject() {
+		return isset($this->syncObject) ? $this->syncObject : false;
+	}
 
-    /**
-     * Sets the SyncObject which caused the exception so it can be later retrieved
-     *
-     * @param SyncObject    $syncobject
-     *
-     * @access public
-     * @return boolean
-     */
-    public function SetSyncObject($syncobject) {
-        $this->syncObject = $syncobject;
-        return true;
-    }
+	/**
+	 * Sets the SyncObject which caused the exception so it can be later retrieved.
+	 *
+	 * @param SyncObject $syncobject
+	 *
+	 * @return bool
+	 */
+	public function SetSyncObject($syncobject) {
+		$this->syncObject = $syncobject;
+
+		return true;
+	}
 }
