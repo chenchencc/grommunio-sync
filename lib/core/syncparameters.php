@@ -99,7 +99,7 @@ class SyncParameters extends StateObject {
 	/**
 	 * Indicates if this folder has a synckey.
 	 *
-	 * @return booleans
+	 * @return boolean
 	 */
 	public function HasSyncKey() {
 		return isset($this->uuid) && isset($this->uuidCounter);
