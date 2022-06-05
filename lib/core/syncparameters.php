@@ -62,7 +62,7 @@ class SyncParameters extends StateObject {
 	/**
 	 * Returns the latest SyncKey of this folder.
 	 *
-	 * @return string|boolean       false if no uuid/counter available
+	 * @return bool|string false if no uuid/counter available
 	 */
 	public function GetSyncKey() {
 		if (isset($this->uuid, $this->uuidCounter)) {
@@ -99,7 +99,7 @@ class SyncParameters extends StateObject {
 	/**
 	 * Indicates if this folder has a synckey.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function HasSyncKey() {
 		return isset($this->uuid) && isset($this->uuidCounter);
@@ -137,7 +137,7 @@ class SyncParameters extends StateObject {
 	/**
 	 * Returns the next synckey.
 	 *
-	 * @return string|boolean       returns false if uuid or counter are not available
+	 * @return bool|string returns false if uuid or counter are not available
 	 */
 	public function GetNewSyncKey() {
 		if (isset($this->uuid, $this->uuidNewCounter)) {

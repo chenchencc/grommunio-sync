@@ -269,7 +269,7 @@ class Utils {
 	 * @param string $goid           OL compatible GlobalObjectID
 	 * @param long   $recurStartTime
 	 *
-	 * @return long basedate
+	 * @return bool|int basedate
 	 */
 	public static function ExtractBaseDate($goid, $recurStartTime) {
 		$hexbase = substr(bin2hex($goid), 32, 8);
@@ -293,7 +293,7 @@ class Utils {
 	 *
 	 * @param int $filtertype Filtertype
 	 *
-	 * @return long
+	 * @return int
 	 */
 	public static function GetCutOffDate($filtertype) {
 		$back = Utils::GetFiltertypeInterval($filtertype);
@@ -310,7 +310,7 @@ class Utils {
 	 *
 	 * @param int $filtertype
 	 *
-	 * @return bool|long returns false on invalid filtertype
+	 * @return bool|int returns false on invalid filtertype
 	 */
 	public static function GetFiltertypeInterval($filtertype) {
 		$back = false;
@@ -357,7 +357,7 @@ class Utils {
 	 * @param int       SYNC_TRUNCATION
 	 * @param mixed $truncation
 	 *
-	 * @return long
+	 * @return int
 	 */
 	public static function GetTruncSize($truncation) {
 		switch ($truncation) {
@@ -487,7 +487,7 @@ class Utils {
 	 *
 	 * @param int $code
 	 *
-	 * @return string or false if code is unknown
+	 * @return bool|string string or false if code is unknown
 	 */
 	public static function GetCommandFromCode($code) {
 		switch ($code) {
@@ -548,7 +548,7 @@ class Utils {
 	 *
 	 * @param string $command
 	 *
-	 * @return int or false if command is unknown
+	 * @return bool|int int or false if command is unknown
 	 */
 	public static function GetCodeFromCommand($command) {
 		switch ($command) {
@@ -607,9 +607,9 @@ class Utils {
 	/**
 	 * Normalize the given timestamp to the start of the day.
 	 *
-	 * @param long $timestamp
+	 * @param int $timestamp
 	 *
-	 * @return long
+	 * @return int
 	 */
 	public static function getDayStartOfTimestamp($timestamp) {
 		return $timestamp - ($timestamp % (60 * 60 * 24));
@@ -619,7 +619,7 @@ class Utils {
 	 * Returns a formatted string output from an optional timestamp.
 	 * If no timestamp is sent, NOW is used.
 	 *
-	 * @param long $timestamp
+	 * @param int $timestamp
 	 *
 	 * @return string
 	 */

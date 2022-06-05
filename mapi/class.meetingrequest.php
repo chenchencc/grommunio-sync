@@ -136,6 +136,7 @@ class Meetingrequest {
 		$this->meetingTimeInfo = false;
 		$this->enableDirectBooking = $enableDirectBooking;
 
+		$properties = [];
 		$properties['goid'] = 'PT_BINARY:PSETID_Meeting:0x3';
 		$properties['goid2'] = 'PT_BINARY:PSETID_Meeting:0x23';
 		$properties['type'] = 'PT_STRING8:PSETID_Meeting:0x24';
@@ -629,7 +630,7 @@ class Meetingrequest {
 	 * @param mixed  $userAction
 	 * @param mixed  $store
 	 *
-	 * @return string $entryid entryid of item which created/updated in calendar
+	 * @return bool|string $entryid entryid of item which created/updated in calendar
 	 */
 	public function doAccept($tentative, $sendresponse, $move, $newProposedStartTime = false, $newProposedEndTime = false, $body = false, $userAction = false, $store = false, $basedate = false, $isImported = false) {
 		if ($this->isLocalOrganiser()) {
@@ -1391,7 +1392,7 @@ class Meetingrequest {
 	 * @param int the current epoch
 	 * @param mixed $epoch
 	 *
-	 * @return the MAPI FileTime equalevent to the given epoch time
+	 * @return int the MAPI FileTime equalevent to the given epoch time
 	 */
 	public function epochToMapiFileTime($epoch) {
 		$nanoseconds_between_epoch = 116444736000000000;
@@ -1556,7 +1557,7 @@ class Meetingrequest {
 	 * @param {Number} $start start offset for freebusy publish range
 	 * @param {Number} $end end offset for freebusy publish range
 	 *
-	 * @return {Array} freebusy blocks for passed publish range
+	 * @return array freebusy blocks for passed publish range
 	 */
 	public function getFreeBusyInfo($entryID, $start, $end) {
 		$result = [];
@@ -1753,7 +1754,7 @@ class Meetingrequest {
 	 * @param PropTag   $prop  proptag of the folder for which we want to get entryid
 	 * @param MAPIStore $store {optional} user store from which we need to get entryid of default folder
 	 *
-	 * @return BinString entryid of folder pointed by $prop
+	 * @return BinString|bool entryid of folder pointed by $prop
 	 */
 	public function getDefaultFolderEntryID($prop, $store = false) {
 		try {
@@ -1967,7 +1968,7 @@ class Meetingrequest {
 			$this->proptags['is_exception'],
 		]);
 
-		if ($basedate && !$this->isMeetingRequest($messageprops[PR_MESSAGE_CLASS])) {
+		if ($basedate !== false && !$this->isMeetingRequest($messageprops[PR_MESSAGE_CLASS])) {
 			// we are creating response from a recurring calendar item object
 			// We found basedate,so opened occurrence and get properties.
 			$recurr = new Recurrence($store, $this->message);
@@ -1988,6 +1989,7 @@ class Meetingrequest {
 				$messageprops[$this->proptags['duedate']] = $imsgprops[$this->proptags['duedate']];
 
 				// Meeting related properties
+				$props = [];
 				$props[$this->proptags['meetingstatus']] = $imsgprops[$this->proptags['meetingstatus']];
 				$props[$this->proptags['responsestatus']] = $imsgprops[$this->proptags['responsestatus']];
 				$props[PR_SUBJECT] = $imsgprops[PR_SUBJECT];
@@ -2212,7 +2214,7 @@ class Meetingrequest {
 	 * @param $fallbackToLoggedInUser if true then return properties of logged in user instead of mailbox owner
 	 * not used when passed store is public store. for public store we are always returning logged in user's info.
 	 *
-	 * @return properties of logged in user in an array in sequence of display_name, email address, address type,
+	 * @return array|bool properties of logged in user in an array in sequence of display_name, email address, address type,
 	 *                    entryid and search key
 	 */
 	public function getOwnerAddress($store, $fallbackToLoggedInUser = true) {
@@ -2329,9 +2331,9 @@ class Meetingrequest {
 	/**
 	 * Function which returns basedate of an changed occurrence from globalID of meeting request.
 	 *
-	 *@param binary $goid globalID
+	 * @param binary $goid globalID
 	 *
-	 *@return bool true if basedate is found else false it not found
+	 * @return bool|int time if basedate is found else false it not found
 	 */
 	public function getBasedateFromGlobalID($goid) {
 		$hexguid = bin2hex($goid);
@@ -2350,11 +2352,11 @@ class Meetingrequest {
 	/**
 	 * Function which sets basedate in globalID of changed occurrence which is to be send.
 	 *
-	 *@param binary $goid globalID
-	 *@param string basedate of changed occurrence
+	 * @param binary $goid globalID
+	 * @param string basedate of changed occurrence
 	 * @param mixed $basedate
 	 *
-	 *@return binary globalID with basedate in it
+	 * @return binary globalID with basedate in it
 	 */
 	public function setBasedateInGlobalID($goid, $basedate = false) {
 		$hexguid = bin2hex($goid);
@@ -2572,7 +2574,7 @@ class Meetingrequest {
 				}
 			}
 
-			if (!$this->errorSetResource && $accessToFolder) {
+			if ($this->errorSetResource === false && $accessToFolder) {
 				/**
 				 * First search on GlobalID(0x3)
 				 * If (recurring and occurrence) If Resource was booked for only this occurrence then Resource should have only this occurrence in Calendar and not whole series.
@@ -2748,7 +2750,7 @@ class Meetingrequest {
 				 * If no other errors occurred and you have no access to the
 				 * folder of the resource, throw an error=1.
 				 */
-				if (!$this->errorSetResource) {
+				if ($this->errorSetResource === false) {
 					$this->errorSetResource = 1;
 				}
 

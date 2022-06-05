@@ -78,7 +78,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	/**
 	 * Indicates which StateMachine should be used.
 	 *
-	 * @return bool Grommunio uses own state machine
+	 * @return Grommunio Grommunio uses own state machine
 	 */
 	public function GetStateMachine() {
 		return $this;
@@ -379,7 +379,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	 *
 	 * @param string $folderid (opt)
 	 *
-	 * @return object(ImportChanges)
+	 * @return bool|object(ImportChanges)
 	 */
 	public function GetImporter($folderid = false) {
 		SLog::Write(LOGLEVEL_DEBUG, sprintf("Grommunio->GetImporter() folderid: '%s'", Utils::PrintAsString($folderid)));
@@ -405,7 +405,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	 *
 	 * @throws StatusException
 	 *
-	 * @return object(ExportChanges)
+	 * @return bool|object(ExportChanges)
 	 */
 	public function GetExporter($folderid = false) {
 		if ($folderid !== false) {
@@ -686,7 +686,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	/**
 	 * Returns the waste basket.
 	 *
-	 * @return string
+	 * @return bool|string
 	 */
 	public function GetWasteBasket() {
 		if ($this->wastebasket) {
@@ -1455,7 +1455,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	 * @param string $store    target store, could contain a "domain\user" value - if empty default store is returned
 	 * @param string $folderid
 	 *
-	 * @return Resource|boolean
+	 * @return bool|resource
 	 */
 	public function GetMAPIStoreForFolderId($store, $folderid) {
 		if ($store == false) {
@@ -1826,7 +1826,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	 *
 	 * @param string $devid the device id
 	 *
-	 * @return MAPIFolder
+	 * @return bool|MAPIFolder
 	 */
 	private function getStateFolder($devid) {
 		// Options request doesn't send device id
@@ -1957,7 +1957,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	 *
 	 * @throws StateInvalidException, UnavailableException
 	 *
-	 * @return bool
+	 * @return bool|int
 	 */
 	private function setStateMessage($state, $devid, $type, $key = false, $counter = false) {
 		if (!$this->stateFolder) {
@@ -2922,7 +2922,7 @@ class Grommunio extends InterProcessData implements IBackend, ISearchProvider, I
 	/**
 	 * Get MAPI addressbook object.
 	 *
-	 * @return MAPIAddressbook object to be used with mapi_ab_* or false on failure
+	 * @return bool|MAPIAddressbook object to be used with mapi_ab_* or false on failure
 	 */
 	private function getAddressbook() {
 		if (isset($this->addressbook) && $this->addressbook) {

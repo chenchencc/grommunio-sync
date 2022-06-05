@@ -13,7 +13,7 @@ class MAPIUtils {
 	 * Create a MAPI restriction to use within an email folder which will
 	 * return all messages since since $timestamp.
 	 *
-	 * @param long $timestamp Timestamp since when to include messages
+	 * @param int $timestamp Timestamp since when to include messages
 	 *
 	 * @return array
 	 */
